@@ -4,7 +4,7 @@ import type {PrivyClientConfig} from '@privy-io/react-auth';
 export const privyConfig: PrivyClientConfig = {
   embeddedWallets: {
     createOnLogin: 'all-users',
-    requireUserPasswordOnCreate: true,
+    // requireUserPasswordOnCreate: true,
     showWalletUIs: true
   },
   // 自定义登录外观
