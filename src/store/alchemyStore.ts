@@ -103,7 +103,7 @@ export const getAssetTransfers = atom(
     
     try {
       // 调用 Alchemy API 获取资产转移历史
-      // @ts-ignore
+      // @ts-expect-error
       const transfers = await alchemy.core.getAssetTransfers(params);
       
       // 更新状态
@@ -171,6 +171,9 @@ export const switchNetwork = atom(
     });
   }
 );
+
+// Uniswap JSON RPC URL Map
+export const uniswapJsonRpcUrlMap = { 8453: [`https://base-mainnet.g.alchemy.com/v2/${import.meta.env.VITE_ALCHEMY_API_KEY}`, 'https://mainnet.base.org']}
 
 // 导出 alchemy 实例以便直接使用
 export { alchemy }; 

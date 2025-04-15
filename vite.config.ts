@@ -17,5 +17,8 @@ export default defineConfig({
         rewrite: (path) => path.replace(/^\/studio-api/, '')
       }
     }
+  },
+  define: {
+    global: {}
   }
 })

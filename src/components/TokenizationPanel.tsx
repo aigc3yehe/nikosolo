@@ -13,10 +13,39 @@ import StatePrompt from './StatePrompt';
 import copySvg from '../assets/copy_address.svg';
 import {accountAtom} from "../store/accountStore.ts";
 import { ModelDetail } from '../store/modelStore';
-
+import { SwapWidget } from '@uniswap/widgets'
+import { uniswapJsonRpcUrlMap } from '../store/alchemyStore.ts';
 interface TokenizationPanelProps {
   model: ModelDetail;
 }
+
+// Default token list, for example
+const TOKEN_LIST = [
+  {
+  "name": "Dai Stablecoin",
+  "address": "0x6B175474E89094C44Da98b954EedeAC495271d0F",
+  "symbol": "DAI",
+  "decimals": 18,
+  "chainId": 1,
+  "logoURI": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x6B175474E89094C44Da98b954EedeAC495271d0F/logo.png"
+},
+  {
+  "name": "Tether USD",
+  "address": "0xdAC17F958D2ee523a2206206994597C13D831ec7",
+  "symbol": "USDT",
+  "decimals": 6,
+  "chainId": 1,
+  "logoURI": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xdAC17F958D2ee523a2206206994597C13D831ec7/logo.png"
+},
+{
+  "name": "USD Coin",
+  "address": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+  "symbol": "USDC",
+  "decimals": 6,
+  "chainId": 1,
+  "logoURI": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png"
+},
+]
 
 // 修改：使用 memo 包装组件，避免不必要的重新渲染
 const TokenizationPanel: React.FC<TokenizationPanelProps> = memo(({
@@ -274,8 +303,8 @@ const TokenizationPanel: React.FC<TokenizationPanelProps> = memo(({
                         allowFullScreen>
                     </iframe>
                 </div>
-                <div className={styles.rightIframeWrapper}>
-                    {/*<SwapWidget />*/}
+                <div className={`${styles.rightIframeWrapper} Uniswap`}>
+                    <SwapWidget jsonRpcUrlMap={uniswapJsonRpcUrlMap} tokenList={TOKEN_LIST}/>
                 </div>
             </div>
           </div>
