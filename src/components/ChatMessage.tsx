@@ -9,6 +9,7 @@ interface ImageUploadState {
   totalCount: number;
   uploadedCount: number;
   isUploading: boolean;
+  finishUpload: boolean;
 }
 
 export interface ChatMessageProps {
@@ -34,7 +35,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
   role,
   content,
   type = 'text',
-  imageUploadState = { totalCount: 0, uploadedCount: 0, isUploading: false },
+  imageUploadState = { totalCount: 0, uploadedCount: 0, isUploading: false, finishUpload: false },
   uploadedFiles = [],
   modelParam = { modelName: undefined, description: undefined },
   images = [],
@@ -119,10 +120,11 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
   };
 
   const renderUploadImageComponent = () => {
-    const { totalCount, uploadedCount, isUploading } = imageUploadState;
+    const { totalCount, uploadedCount, isUploading, finishUpload } = imageUploadState;
     const hasImages = uploadedFiles.length > 0;
     const hasMaxImages = uploadedFiles.length >= 10;
-    const canConfirm = hasMaxImages && !isUploading;
+    const canConfirm = hasMaxImages && !isUploading && !finishUpload;
+    const canAddImages = !isUploading && !finishUpload;
     
     return (
       <>
@@ -131,9 +133,9 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
             <span className={styles.uploadImageTitle}>Upload Images:</span>
             <div className={styles.uploadButtonGroup}>
               <button 
-                className={`${styles.addButton} ${isUploading ? styles.disabled : ''}`}
+                className={`${styles.addButton} ${canAddImages ? styles.disabled : ''}`}
                 onClick={onAddImage}
-                disabled={isUploading}
+                disabled={!canAddImages}
               >
                 Add
               </button>
@@ -154,12 +156,14 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
                 <div key={index} className={`${styles.imageItem} ${isUploading ? styles.isUploading : ''}`}>
                   <img src={imageIcon} alt="File" className={styles.imageIcon} />
                   <span className={styles.fileName}>{formatFileName(file.name)}</span>
-                  <img
-                    src={closeIcon}
-                    alt="Remove"
-                    className={styles.removeIcon}
-                    onClick={() => !isUploading && onRemoveImage && onRemoveImage(file.url)}
-                  />
+                  { !finishUpload && (
+                      <img
+                          src={closeIcon}
+                          alt="Remove"
+                          className={styles.removeIcon}
+                          onClick={() => !isUploading && onRemoveImage && onRemoveImage(file.url)}
+                      />
+                  )}
                 </div>
               ))}
             </div>
@@ -181,6 +185,12 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
               }
             </span>
           </div>
+        )}
+
+        {!finishUpload && hasMaxImages && (
+            <div className={styles.confirmHint}>
+              You've uploaded the maximum of 10 images. Please click Confirm to continue.
+            </div>
         )}
       </>
     );

@@ -78,6 +78,14 @@
   line-height: 100%;
 }
 
+.confirmHint {
+  color: #88A4C2;
+  font-family: 'Jura', sans-serif;
+  font-weight: 500;
+  font-size: 0.875rem; /* 14px */
+  line-height: 100%;
+}
+
 /* 上传按钮组 */
 .uploadButtonGroup {
   display: flex;

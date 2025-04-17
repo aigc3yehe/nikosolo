@@ -39,6 +39,7 @@ export interface Message {
     totalCount: number;
     uploadedCount: number;
     isUploading: boolean;
+    finishUpload: boolean;
   };
   uploadedFiles?: Array<{name: string, url: string}>;
   modelParam?: {
@@ -74,6 +75,7 @@ export interface ChatState {
   did?: string;
   urls: Array<{name: string, url: string}>;
   task_type?: string;
+  task_value?: string;
   modelParam?: {
     modelName?: string;
     description?: string;
@@ -96,6 +98,7 @@ const initialState: ChatState = {
   did: '0x4272e3150A81B9735ccc58692f5dd3Cf73fB3B92', // 测试privy did
   urls: [],
   task_type: 'chat',
+  task_value: 'chat',
   modelParam: undefined,
   currentModel: null,
   selectedAspectRatio: aspectRatios[0], // 默认选择1:1
@@ -430,6 +433,22 @@ export function removeUploadedFile(messages: Message[], messageIndex: number, fi
   });
 }
 
+export function updateUploadedState(messages: Message[], messageIndex: number, state: boolean) {
+  return messages.map((msg, index) => {
+    if (index === messageIndex && msg.type === 'upload_image' && msg.imageUploadState) {
+      const newState = {
+        ...msg.imageUploadState,
+        finishUpload: state
+      }
+      return {
+        ...msg,
+        imageUploadState: newState,
+      };
+    }
+    return msg;
+  });
+}
+
 // ==== 新增的操作函数 ====
 
 // 发送消息的操作
@@ -487,6 +506,11 @@ export const sendMessage = atom(
       const task_type = response.task_type;
       const model = response.model;
       const request_id = response.request_id;
+
+      let task_value = task_type;
+      if (task_type === 'finetuing') {
+          task_value = "fine tuning";
+      }
       
       // 处理特殊状态：full 和 queue
       if (status === 'full' || status === 'queue') {
@@ -548,7 +572,7 @@ export const sendMessage = atom(
         content: content,
         type: messageType as 'text' | 'upload_image' | 'generating_image' | 'generate_result',
         imageUploadState: messageType === 'upload_image' 
-          ? { totalCount: 0, uploadedCount: 0, isUploading: false } 
+          ? { totalCount: 0, uploadedCount: 0, isUploading: false, finishUpload: false }
           : undefined,
         request_id: request_id || undefined
       };
@@ -588,6 +612,7 @@ export const sendMessage = atom(
         isLoading: false,
         isGenerating: isGenerating,
         task_type: task_type,
+        task_value: task_value,
         modelParam: updatedModelParam
       });
 
@@ -626,7 +651,8 @@ export function checkAndAddModelConfigMessage(messages: Message[]): Message[] {
   if (uploadImageMsgIndex === -1) return messages;
   
   const uploadImageMsg = messages[uploadImageMsgIndex];
-  const hasEnoughImages = uploadImageMsg.uploadedFiles && uploadImageMsg.uploadedFiles.length >= 10;
+  const finishUpload = uploadImageMsg.imageUploadState && uploadImageMsg.imageUploadState.finishUpload
+  const hasEnoughImages = uploadImageMsg.uploadedFiles && uploadImageMsg.uploadedFiles.length >= 10 && finishUpload;
   
   // 检查是否已有model_config消息
   const hasModelConfigMsg = messages.some((msg, index) => 
@@ -783,6 +809,24 @@ export const addImage = atom(
   }
 );
 
+// 修改removeImage函数来处理model_config消息
+export const finishUploadImages = atom(
+    null,
+    (get, set, messageIndex: number ) => {
+      const chatState = get(chatAtom);
+
+      // 更新消息中的uploadedFiles
+      const updatedMessages = updateUploadedState(chatState.messages, messageIndex, true);
+
+      // 检查图片数量并处理model_config消息
+      const finalMessages = checkAndAddModelConfigMessage(updatedMessages);
+
+      set(chatAtom, {
+        ...chatState,
+        messages: finalMessages
+      });
+    }
+);
 
 // 修改removeImage函数来处理model_config消息
 export const removeImage = atom(

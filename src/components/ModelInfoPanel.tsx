@@ -14,6 +14,7 @@ import {
   fetchTokenizationState,
   setModelFlag
 } from '../store/tokenStore';
+import {showToastAtom} from "../store/imagesStore.ts";
 
 interface ModelInfoPanelProps {
   model: ModelDetail;
@@ -21,6 +22,7 @@ interface ModelInfoPanelProps {
 
 const ModelInfoPanel: React.FC<ModelInfoPanelProps> = ({ model }) => {
   const [accountState] = useAtom(accountAtom);
+  const showToast = useSetAtom(showToastAtom);
   const showGeneratePopup = useSetAtom(showGeneratePopupAtom);
   const setTokenizationFlag = useSetAtom(setModelFlag);
   const fetchState = useSetAtom(fetchTokenizationState);
@@ -74,7 +76,7 @@ const ModelInfoPanel: React.FC<ModelInfoPanelProps> = ({ model }) => {
     if (trainState === 2) {
       return { text: 'Ready', className: styles.statusReady, isReady: true };
     } else {
-      return { text: 'Train', className: styles.statusTrain, isReady: false };
+      return { text: 'Training', className: styles.statusTrain, isReady: false };
     }
   };
   
@@ -86,8 +88,30 @@ const ModelInfoPanel: React.FC<ModelInfoPanelProps> = ({ model }) => {
   };
   
   const handleShare = () => {
-    console.log('Share model:', model.id);
-    // 实现分享功能
+    // 获取当前页面URL
+    const currentUrl = window.location.href;
+    
+    // 确保URL包含模型ID和名称参数
+    const url = new URL(currentUrl);
+    url.searchParams.set('model_id', model.id.toString());
+    url.searchParams.set('model_name', model.name);
+    
+    // 复制到剪贴板
+    navigator.clipboard.writeText(url.toString())
+      .then(() => {
+        // 显示英文提示
+        showToast({
+          message: 'Link copied to clipboard! You can now share it with others.',
+          severity: 'success'
+        });
+      })
+      .catch(err => {
+        console.error('Failed to copy URL: ', err);
+        showToast({
+          message: 'Failed to copy link. Please try again.',
+          severity: 'error'
+        });
+      });
   };
   
   const handleToken = async () => {
@@ -212,14 +236,6 @@ const ModelInfoPanel: React.FC<ModelInfoPanelProps> = ({ model }) => {
             <button 
               className={styles.shareButton} 
               onClick={handleShare}
-            >
-              <img src={shareSvg} alt="Share" className={styles.buttonIcon} />
-            </button>
-
-            {/* 分享按钮 */}
-            <button
-                className={styles.shareButton}
-                onClick={handleShare}
             >
               <img src={shareSvg} alt="Share" className={styles.buttonIcon} />
             </button>

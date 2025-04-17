@@ -4,15 +4,15 @@ import styles from './ChatWindow.module.css';
 import clearIcon from '../assets/clear.svg';
 import ChatMessage from './ChatMessage';
 import ChatInput from './ChatInput';
-import { 
-  chatAtom, 
-  addImage, 
-  removeImage, 
+import {
+  chatAtom,
+  addImage,
+  removeImage,
   clearChat,
   setUserInfo,
   checkConnectionStatus,
   startHeartbeat,
-  stopHeartbeat
+  stopHeartbeat, finishUploadImages
 } from '../store/chatStore';
 import { showDialogAtom } from '../store/dialogStore';
 import { usePrivy } from '@privy-io/react-auth';
@@ -26,6 +26,7 @@ interface ChatWindowProps {
 const ChatWindow: React.FC<ChatWindowProps> = ({ uuid, did }) => {
   const [chatState] = useAtom(chatAtom);
   const [, addImageAction] = useAtom(addImage);
+  const [, finishUploadImagesAction] = useAtom(finishUploadImages);
   const [, removeImageAction] = useAtom(removeImage);
   const [, clearChatAction] = useAtom(clearChat);
   const [, setUserInfoAction] = useAtom(setUserInfo);
@@ -281,7 +282,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ uuid, did }) => {
                 imageHeight={message.imageInfo?.height || 256}
                 request_id={message.request_id}
                 onAddImage={() => addImageAction(index)}
-                onConfirmImages={() => {}}
+                onConfirmImages={() => finishUploadImagesAction(index)}
                 onRemoveImage={(url) => removeImageAction({ messageIndex: index, fileUrl: url })}
               />
             ))

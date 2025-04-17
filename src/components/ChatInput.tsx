@@ -118,7 +118,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ isLoading, disabled }) => {
         id: 'task', 
         text: 'Task', 
         type: 'normal', 
-        value: chatState.task_type 
+        value: chatState.task_value
       });
     }
 
@@ -158,7 +158,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ isLoading, disabled }) => {
     }
     
     setActiveTags(baseTags);
-  }, [chatState.task_type, chatState.currentModel, chatState.selectedAspectRatio, chatState.loraWeight]);
+  }, [chatState.task_value, chatState.task_type, chatState.currentModel, chatState.selectedAspectRatio, chatState.loraWeight]);
 
   // 监听textarea的滚动事件
   const handleTextareaScroll = () => {
@@ -184,10 +184,10 @@ const ChatInput: React.FC<ChatInputProps> = ({ isLoading, disabled }) => {
   };
 
   // 处理按键事件
-  const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+  const handleKeyPress = async (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      handleSendMessage();
+      await handleSendMessage();
     }
   };
 
