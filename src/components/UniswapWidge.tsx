@@ -12,6 +12,7 @@ import { uniswapJsonRpcUrlMap } from "../store/alchemyStore";
 import { providerAtom } from "../store/providerStore";
 import { ethers } from "ethers";
 import { base } from "viem/chains";
+import '@uniswap/widgets/fonts.css'
 
 const theme: Theme = {
   ...darkTheme,
