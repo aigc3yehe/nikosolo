@@ -14,9 +14,9 @@ export interface AspectRatio {
 export const aspectRatios: AspectRatio[] = [
   { label: '1:1', value: '1:1', width: 1024, height: 1024 },
   { label: '3:4', value: '3:4', width: 768, height: 1024 },
-  { label: '9:16', value: '9:16', width: 1080, height: 1920 },
+  //{ label: '9:16', value: '9:16', width: 1080, height: 1920 },
   { label: '4:3', value: '4:3', width: 1024, height: 768 },
-  { label: '16:9', value: '16:9', width: 1920, height: 1080 },
+  //{ label: '16:9', value: '16:9', width: 1920, height: 1080 },
 ];
 
 // 任务状态类型
@@ -132,11 +132,11 @@ export async function checkImageGenerationStatus(request_id: string): Promise<Ch
         'Authorization': `Bearer ${import.meta.env.VITE_BEARER_TOKEN}`
       }
     });
-    
+
     if (!response.ok) {
       throw new Error(`Status check failed with status code ${response.status}`);
     }
-    
+
     return await response.json();
   } catch (error) {
     console.error('查询图片生成状态出错:', error);
@@ -147,47 +147,47 @@ export async function checkImageGenerationStatus(request_id: string): Promise<Ch
 // 简化的轮询函数 - 使用 for 循环
 export async function pollImageGenerationTask(taskId: string, set: any, get: any): Promise<void> {
   console.log('===== 开始轮询任务:', taskId);
-  
+
   // 最大轮询次数和间隔时间
   const MAX_POLL_COUNT = 60; // 最多轮询60次
   const POLL_INTERVAL = 5000; // 每次间隔5秒
-  
+
   for (let pollCount = 0; pollCount < MAX_POLL_COUNT; pollCount++) {
     try {
       console.log(`===== 轮询任务 ${taskId} 第 ${pollCount + 1} 次`);
-      
+
       // 等待一段时间再查询
       if (pollCount > 0) {
         await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL));
       }
-      
+
       // 查询任务状态
       const statusResponse = await checkImageGenerationStatus(taskId);
       console.log('===== 查询任务状态响应:', statusResponse);
-      
+
       // 获取当前状态
       const chatState = get(chatAtom);
-      
+
       // 如果没有状态信息，继续轮询
       if (!statusResponse?.data?.status) {
         console.log('===== 响应中没有状态信息，继续轮询');
         continue;
       }
-      
+
       const status = statusResponse.data.status.toLowerCase();
       console.log('===== 任务状态:', status);
-      
+
       // 处理不同状态
       if (status === 'completed') {
         console.log('===== 任务完成');
-        
+
         // 获取生成的图片
         const generatedImages = statusResponse.data.upscaled_urls || [];
         console.log('===== 获取到生成的图片:', generatedImages);
-        
+
         if (generatedImages.length > 0) {
           // 查找对应的 generating_image 消息
-  
+
           const messageIndex = chatState.messages.findIndex(
             // @ts-ignore
             msg => msg.type === 'generating_image' && msg.request_id === taskId
@@ -213,7 +213,7 @@ export async function pollImageGenerationTask(taskId: string, set: any, get: any
                 height: height
               }
             };
-            
+
             // 更新消息列表
             set(chatAtom, {
               ...chatState,
@@ -238,10 +238,10 @@ export async function pollImageGenerationTask(taskId: string, set: any, get: any
               request_id: taskId,
               imageInfo: {
                 width: width,
-                height: height 
+                height: height
               }
             };
-            
+
             // 添加消息到列表
             set(chatAtom, {
               ...chatState,
@@ -249,7 +249,7 @@ export async function pollImageGenerationTask(taskId: string, set: any, get: any
               isGenerating: false
             });
           }
-          
+
           // 显示成功通知
           set(showToastAtom, {
             message: 'Image generation completed',
@@ -263,19 +263,19 @@ export async function pollImageGenerationTask(taskId: string, set: any, get: any
             set(fetchImages, { reset: true, model_id: chatState.currentModel.id });
           }
         }
-        
+
         // 任务完成，退出轮询
         console.log('===== 任务完成，退出轮询');
         return;
       } else if (status === 'failed' || status === 'error') {
         console.log('===== 任务失败');
-        
+
         // 查找对应的 generating_image 消息
         const messageIndex = chatState.messages.findIndex(
           // @ts-ignore
           msg => msg.type === 'generating_image' && msg.request_id === taskId
         );
-        
+
         if (messageIndex !== -1) {
           console.log('===== 找到对应的生成中消息，更新为失败消息');
           // 更新现有消息为失败消息
@@ -286,7 +286,7 @@ export async function pollImageGenerationTask(taskId: string, set: any, get: any
             type: 'text', // 改为普通文本消息
             images: undefined // 清除图片字段
           };
-          
+
           // 更新消息列表
           set(chatAtom, {
             ...chatState,
@@ -305,31 +305,31 @@ export async function pollImageGenerationTask(taskId: string, set: any, get: any
             }]
           });
         }
-        
+
         // 显示失败通知
         set(showToastAtom, {
           message: 'image generation failed',
           severity: 'error'
         });
-        
+
         // 任务失败，退出轮询
         console.log('===== 任务失败，退出轮询');
         return;
       }
-      
+
       // 如果是其他状态（处理中、等待中），继续轮询
       console.log('===== 任务仍在进行中，继续轮询');
-      
+
     } catch (error) {
       console.error('===== 轮询任务状态出错:', error);
-      
+
       // 发生错误时，增加轮询间隔时间，但继续轮询
       const waitTime = Math.min(30000, POLL_INTERVAL * Math.min(5, Math.floor(pollCount / 5) + 1));
       console.log(`===== 发生错误，等待 ${waitTime}ms 后继续轮询`);
       await new Promise(resolve => setTimeout(resolve, waitTime));
     }
   }
-  
+
   // 达到最大轮询次数，添加超时消息
   console.log('===== 达到最大轮询次数，任务可能超时');
   const finalChatState = get(chatAtom);
@@ -342,7 +342,7 @@ export async function pollImageGenerationTask(taskId: string, set: any, get: any
     }],
     isGenerating: false
   });
-  
+
   // 显示超时通知
   set(showToastAtom, {
     message: 'Image generation timed out',
@@ -355,7 +355,7 @@ export async function sendChatRequest(message: string, history: Message[], userU
   model_id?: number, width?: number, height?: number, lora_name?: string, lora_weight?: number
 ) {
   const API_URL = '/api/chat';
-  
+
   try {
     const conversation_history = history.map(msg => ({
       role: msg.role,
@@ -456,15 +456,15 @@ export const sendMessage = atom(
   null,
   async (get, set, message: string) => {
     if (!message.trim()) return;
-    
+
     const chatState = get(chatAtom);
-    
+
     // 添加用户消息到聊天记录
-    const userMessage: Message = { 
-      role: 'user', 
+    const userMessage: Message = {
+      role: 'user',
       content: message
     };
-    
+
     // 更新状态为加载中
     set(chatAtom, {
       ...chatState,
@@ -473,17 +473,17 @@ export const sendMessage = atom(
       isGenerating: false,
       error: null
     });
-    
+
     try {
       // 获取当前选择的宽高比
       const { width, height } = chatState.selectedAspectRatio || { width: 1024, height: 1024 };
-      
+
       // 获取当前模型的lora_name
       const lora_name = chatState.currentModel?.model_tran?.[0]?.lora_name || undefined;
 
       // 获取当前模型的model_id
       const model_id = chatState.currentModel?.id;
-      
+
       // 发送请求到API
       const response = await sendChatRequest(
         userMessage.content,
@@ -500,7 +500,7 @@ export const sendMessage = atom(
 
       // 获取最新状态（可能在API请求期间已被心跳更新）
       const latestState = get(chatAtom);
-      
+
       const status = response.status;
       const content = response.content;
       const task_type = response.task_type;
@@ -511,7 +511,7 @@ export const sendMessage = atom(
       if (task_type === 'finetuing') {
           task_value = "fine tuning";
       }
-      
+
       // 处理特殊状态：full 和 queue
       if (status === 'full' || status === 'queue') {
         // 更新连接状态
@@ -521,12 +521,12 @@ export const sendMessage = atom(
           position: status === 'queue' ? 99 : undefined,
           message: content // 使用返回的提示消息
         };
-        
+
         // 停止心跳
         if (latestState.heartbeatId) {
           set(stopHeartbeat);
         }
-        
+
         // 更新状态 - 使用最新状态作为基础
         set(chatAtom, {
           ...latestState,
@@ -538,16 +538,16 @@ export const sendMessage = atom(
           isGenerating: false,
           connection: newConnectionStatus
         });
-        
+
         // 显示通知
         set(showToastAtom, {
           message: status === 'full' ? 'Chat time has ended' : 'You have entered the queue',
           severity: 'warning'
         });
-        
+
         return;
       }
-      
+
       // 处理错误状态
       if (status === 'error') {
         throw new Error(content || '发送消息时出错');
@@ -571,7 +571,7 @@ export const sendMessage = atom(
         role: 'assistant',
         content: content,
         type: messageType as 'text' | 'upload_image' | 'generating_image' | 'generate_result',
-        imageUploadState: messageType === 'upload_image' 
+        imageUploadState: messageType === 'upload_image'
           ? { totalCount: 0, uploadedCount: 0, isUploading: false, finishUpload: false }
           : undefined,
         request_id: request_id || undefined
@@ -579,20 +579,20 @@ export const sendMessage = atom(
 
       // 更新消息历史 - 使用最新状态的消息列表
       const updatedMessages = [...latestState.messages, receivedMessage];
-      
+
       // 如果返回了model信息，更新model_config消息和chatAtom的modelParam
       let finalMessages = updatedMessages;
       let updatedModelParam = latestState.modelParam;
-      
+
       if (model && model.name && model.description) {
         const modelParam = {
           modelName: model.name,
           description: model.description
         };
-        
+
         // 更新modelParam
         updatedModelParam = modelParam;
-        
+
         // 查找并更新model_config消息
         finalMessages = updatedMessages.map(msg => {
           if (msg.type === 'model_config') {
@@ -604,7 +604,7 @@ export const sendMessage = atom(
           return msg;
         });
       }
-      
+
       // 更新状态 - 使用最新状态作为基础
       set(chatAtom, {
         ...latestState,
@@ -625,15 +625,15 @@ export const sendMessage = atom(
       }
     } catch (error) {
       console.error('发送消息时出错:', error);
-      
+
       // 获取最新状态
       const latestState = get(chatAtom);
-      
+
       // 更新错误状态 - 使用最新状态作为基础
       set(chatAtom, {
         ...latestState,
-        messages: [...latestState.messages, { 
-          role: 'system', 
+        messages: [...latestState.messages, {
+          role: 'system',
           content: error instanceof Error ? error.message : 'Send Message error, Please retry later'
         }],
         isLoading: false,
@@ -649,16 +649,16 @@ export function checkAndAddModelConfigMessage(messages: Message[]): Message[] {
   // 找到upload_image类型的消息
   const uploadImageMsgIndex = messages.findIndex(msg => msg.type === 'upload_image');
   if (uploadImageMsgIndex === -1) return messages;
-  
+
   const uploadImageMsg = messages[uploadImageMsgIndex];
   const finishUpload = uploadImageMsg.imageUploadState && uploadImageMsg.imageUploadState.finishUpload
   const hasEnoughImages = uploadImageMsg.uploadedFiles && uploadImageMsg.uploadedFiles.length >= 10 && finishUpload;
-  
+
   // 检查是否已有model_config消息
-  const hasModelConfigMsg = messages.some((msg, index) => 
+  const hasModelConfigMsg = messages.some((msg, index) =>
     msg.type === 'model_config' && index === uploadImageMsgIndex + 1
   );
-  
+
   if (hasEnoughImages && !hasModelConfigMsg) {
     // 需要添加model_config消息
     const modelConfigMsg: Message = {
@@ -670,7 +670,7 @@ export function checkAndAddModelConfigMessage(messages: Message[]): Message[] {
         description: messages[0]?.modelParam?.description || undefined
       }
     };
-    
+
     // 插入model_config消息到upload_image消息后面
     return [
       ...messages.slice(0, uploadImageMsgIndex + 1),
@@ -679,11 +679,11 @@ export function checkAndAddModelConfigMessage(messages: Message[]): Message[] {
     ];
   } else if (!hasEnoughImages && hasModelConfigMsg) {
     // 需要移除model_config消息
-    return messages.filter((msg, index) => 
+    return messages.filter((msg, index) =>
       !(msg.type === 'model_config' && index === uploadImageMsgIndex + 1)
     );
   }
-  
+
   return messages;
 }
 
@@ -696,19 +696,19 @@ export const addImage = atom(
     input.type = 'file';
     input.accept = 'image/*';
     input.multiple = true;
-    
+
     input.onchange = async (event) => {
       const target = event.target as HTMLInputElement;
       const files = target.files;
-      
+
       if (!files || files.length === 0) return;
-      
+
       const chatState = get(chatAtom);
-      
+
       // 根据现有的uploadedFiles获取当前消息
       const currentMessage = chatState.messages[messageIndex];
       const existingFiles = currentMessage.uploadedFiles || [];
-      
+
       try {
         // 设置上传状态
         set(chatAtom, {
@@ -719,13 +719,13 @@ export const addImage = atom(
             isUploading: true
           })
         });
-        
+
         // 准备要上传的文件信息
         const filesWithNames = Array.from(files).map(file => ({
           file,
           name: file.name
         }));
-        
+
         // 使用uploadImages函数上传图片
         const uploadedUrls = await uploadImages(
           messageIndex,
@@ -735,7 +735,7 @@ export const addImage = atom(
           // 更新消息URL的回调
           ({ messageId, url, progress }) => {
             const updatedChatState = get(chatAtom);
-            
+
             // 更新上传进度
             set(chatAtom, {
               ...updatedChatState,
@@ -744,14 +744,14 @@ export const addImage = atom(
                 isUploading: progress < 100
               })
             });
-            
+
             // 更新URL到状态
             set(updateMessageUrlsAtom, { messageId, url, progress });
           },
           // 显示通知的回调
           (params) => set(showToastAtom, params)
         );
-        
+
         // 上传完成后，更新uploadedFiles
         if (uploadedUrls && uploadedUrls.length > 0) {
           // 将新上传的文件与之前的合并
@@ -762,20 +762,20 @@ export const addImage = atom(
               url
             }))
           ];
-          
+
           const finalChatState = get(chatAtom);
 
           const updatedMessages = updateUploadedFiles(finalChatState.messages, messageIndex, newUploadedFiles);
           // 检查图片数量并处理model_config消息
           const finalMessages = checkAndAddModelConfigMessage(updatedMessages);
-          
+
           set(chatAtom, {
             ...finalChatState,
             messages: finalMessages,
             urls: newUploadedFiles
           });
         }
-        
+
         // 上传完成，更新上传状态
         const lastChatState = get(chatAtom);
         set(chatAtom, {
@@ -786,9 +786,9 @@ export const addImage = atom(
         });
       } catch (error) {
         console.error('Error uploading images:', error);
-        
+
         const errorChatState = get(chatAtom);
-        
+
         // 更新错误状态
         set(chatAtom, {
           ...errorChatState,
@@ -796,15 +796,15 @@ export const addImage = atom(
             isUploading: false
           })
         });
-        
+
         // 显示错误通知
-        set(showToastAtom, { 
+        set(showToastAtom, {
           message: '图片上传失败',
           severity: 'error'
         });
       }
     };
-    
+
     input.click();
   }
 );
@@ -835,19 +835,19 @@ export const removeImage = atom(
     const { messageIndex, fileUrl } = params;
     const chatState = get(chatAtom);
     const imageUploadState = get(imageUploadAtom);
-    
+
     // 更新消息中的uploadedFiles
     const updatedMessages = removeUploadedFile(chatState.messages, messageIndex, fileUrl);
-    
+
     // 检查图片数量并处理model_config消息
     const finalMessages = checkAndAddModelConfigMessage(updatedMessages);
-    
+
     set(chatAtom, {
       ...chatState,
       messages: finalMessages,
       urls: chatState.urls.filter(url => url.url !== fileUrl)
     });
-    
+
     // 从imageUploadState中也移除URL
     set(setImageUploadStateAtom, {
       uploadedUrls: imageUploadState.uploadedUrls.filter(url => url !== fileUrl)
@@ -923,53 +923,53 @@ export const startHeartbeat = atom(
   null,
   (get, set) => {
     const chatState = get(chatAtom);
-    
+
     // 如果已经有心跳计时器，先清除
     if (chatState.heartbeatId) {
       clearInterval(chatState.heartbeatId);
     }
-    
+
     // 创建新的心跳计时器
     const heartbeatId = window.setInterval(async () => {
       try {
         const currentState = get(chatAtom);
-        
+
         // 检查用户是否仍然活跃
         if (!currentState.connection.isActive || !currentState.userUuid) {
           // 如果用户不再活跃，停止心跳
           set(stopHeartbeat);
           return;
         }
-        
+
         // 如果当前正在加载聊天回复，暂时跳过这次心跳
         // 这防止心跳更新覆盖聊天请求的状态
         if (currentState.isLoading) {
           console.log('聊天正在加载中，跳过本次心跳更新');
           return;
         }
-        
+
         // 发送心跳并获取新的连接状态
         const newConnectionStatus = await sendHeartbeat(currentState.userUuid);
-        
+
         // 重新获取最新状态（可能在心跳请求期间已经被其他操作更新了）
         const latestState = get(chatAtom);
-        
+
         // 如果这段时间内已经开始加载聊天，不要覆盖状态
         if (latestState.isLoading) {
           console.log('心跳期间聊天状态变为加载中，跳过心跳更新');
           return;
         }
-        
+
         // 仅更新连接状态，而不影响其他状态
         set(chatAtom, {
           ...latestState, // 使用最新状态作为基础
           connection: newConnectionStatus
         });
-        
+
         // 如果用户不再活跃，停止心跳
         if (!newConnectionStatus.isActive) {
           set(stopHeartbeat);
-          
+
           // 可以显示通知用户已断开连接
           set(showToastAtom, {
             message: 'Your session has ended or been replaced',
@@ -981,7 +981,7 @@ export const startHeartbeat = atom(
         // 错误处理可以根据需要添加，例如在多次失败后停止心跳
       }
     }, HEARTBEAT_INTERVAL);
-    
+
     // 更新心跳ID到状态
     set(chatAtom, {
       ...chatState,
@@ -995,10 +995,10 @@ export const stopHeartbeat = atom(
   null,
   (get, set) => {
     const chatState = get(chatAtom);
-    
+
     if (chatState.heartbeatId) {
       clearInterval(chatState.heartbeatId);
-      
+
       set(chatAtom, {
         ...chatState,
         heartbeatId: undefined
@@ -1013,26 +1013,26 @@ export const checkConnectionStatus = atom(
   async (get, set) => {
     const chatState = get(chatAtom);
     const { userUuid } = chatState;
-    
+
     if (!userUuid) {
       console.warn('无法检查连接状态: userUuid为空');
       return;
     }
-    
+
     try {
       set(chatAtom, {
         ...chatState,
         isLoading: true
       });
-      
+
       const connectionStatus = await fetchConnectionStatus(userUuid);
-      
+
       set(chatAtom, {
         ...chatState,
         connection: connectionStatus,
         isLoading: false
       });
-      
+
       // 如果用户变为活跃状态，启动心跳
       if (connectionStatus.isActive) {
         set(startHeartbeat);
@@ -1040,11 +1040,11 @@ export const checkConnectionStatus = atom(
         // 如果用户不再活跃但心跳仍在运行，停止心跳
         set(stopHeartbeat);
       }
-      
+
       return connectionStatus;
     } catch (error) {
       console.error('检查连接状态出错:', error);
-      
+
       set(chatAtom, {
         ...chatState,
         error: error instanceof Error ? error.message : '检查连接状态出错',
@@ -1061,14 +1061,14 @@ export const setUserInfo = atom(
     const { uuid, did } = params;
     const chatState = get(chatAtom);
     const prevDid = chatState.did;
-    
+
     // 更新用户信息
     set(chatAtom, {
       ...chatState,
       userUuid: uuid,
       did: did
     });
-    
+
     // 如果did从null/undefined变成有值，则检查连接状态
     if ((!prevDid || prevDid === '') && did) {
       console.log('用户已登录，检查连接状态');
@@ -1082,7 +1082,7 @@ export const setCurrentModel = atom(
   null,
   (get, set, model: ModelDetail | null) => {
     const chatState = get(chatAtom);
-    
+
     set(chatAtom, {
       ...chatState,
       currentModel: model
@@ -1095,7 +1095,7 @@ export const clearCurrentModel = atom(
   null,
   (get, set) => {
     const chatState = get(chatAtom);
-    
+
     set(chatAtom, {
       ...chatState,
       currentModel: null
@@ -1108,7 +1108,7 @@ export const setAspectRatio = atom(
   null,
   (get, set, aspectRatio: AspectRatio) => {
     const chatState = get(chatAtom);
-    
+
     set(chatAtom, {
       ...chatState,
       selectedAspectRatio: aspectRatio
