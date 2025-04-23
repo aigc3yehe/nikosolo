@@ -13,23 +13,11 @@ import StatePrompt from './StatePrompt';
 import copySvg from '../assets/copy_address.svg';
 import {accountAtom} from "../store/accountStore.ts";
 import {ModelDetail} from '../store/modelStore';
-import {darkTheme, SwapWidget, Theme} from '@uniswap/widgets'
-import {uniswapJsonRpcUrlMap} from '../store/alchemyStore.ts';
 import {showToastAtom} from "../store/imagesStore.ts";
+import UniswapWidget from './UniswapWidge.tsx';
 
 interface TokenizationPanelProps {
   model: ModelDetail;
-}
-
-const theme: Theme = {
-    ...darkTheme,
-    container: "#0E111B",
-    borderRadius: {
-        large: 0.25,
-        medium: 0.25,
-        small: 0.25,
-        xsmall: 0.25
-    }
 }
 
 // 修改：使用 memo 包装组件，避免不必要的重新渲染
@@ -242,7 +230,7 @@ const TokenizationPanel: React.FC<TokenizationPanelProps> = memo(({
 
       // 修改 renderTokenizationStatus 函数中的完成状态部分
       if (statusData.state === 'completed' && statusData.collectionToken) {
-        const tokenList = [
+        const token = 
             {
                 "name": statusData.collectionToken.name,
                 "address": statusData.collectionToken.address,
@@ -251,8 +239,7 @@ const TokenizationPanel: React.FC<TokenizationPanelProps> = memo(({
                 "chainId": 8453,
                 "logoURI": statusData.collectionToken.imageIpfs
             }
-        ]
-        console.log(tokenList[0]);
+        console.log(token);
         return (
           <div className={styles.completedState}>
             <div className={styles.tokenInfo}>
@@ -315,12 +302,7 @@ const TokenizationPanel: React.FC<TokenizationPanelProps> = memo(({
                     </iframe>
                 </div>
                 <div className={`${styles.rightIframeWrapper} Uniswap`}>
-                    <SwapWidget
-                        width="100%"
-                        theme={theme}
-                        jsonRpcUrlMap={uniswapJsonRpcUrlMap}
-                        tokenList={tokenList}
-                    />
+                   <UniswapWidget token={token} />
                 </div>
             </div>
           </div>

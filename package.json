@@ -24,6 +24,7 @@
     "@uniswap/widgets": "^2.59.0",
     "@wagmi/core": "^2.16.5",
     "alchemy-sdk": "^3.5.6",
+    "ethers": "^5.8.0",
     "jotai": "^2.12.2",
     "jotai-tanstack-query": "^0.9.0",
     "lottie-react": "^2.4.1",
@@ -33,6 +34,7 @@
     "react-redux": "^9.2.0",
     "react-router-dom": "^7.3.0",
     "viem": "^2.23.12",
+    "vite-plugin-node-polyfills": "^0.23.0",
     "wagmi": "^2.14.13"
   },
   "devDependencies": {

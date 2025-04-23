@@ -1,5 +1,6 @@
 import { atom } from 'jotai';
 import { Alchemy, Network, AssetTransfersCategory, AssetTransfersResponse, AssetTransfersWithMetadataResponse, GetTokensForOwnerResponse } from 'alchemy-sdk';
+import { SupportedChainId } from '@uniswap/widgets';
 
 // 配置 Alchemy SDK
 const alchemyConfig = {
@@ -173,7 +174,7 @@ export const switchNetwork = atom(
 );
 
 // Uniswap JSON RPC URL Map
-export const uniswapJsonRpcUrlMap = { 8453: [`https://base-mainnet.g.alchemy.com/v2/${import.meta.env.VITE_ALCHEMY_API_KEY}`, 'https://mainnet.base.org']}
+export const uniswapJsonRpcUrlMap = { [SupportedChainId.BASE]: [`https://base-mainnet.g.alchemy.com/v2/${import.meta.env.VITE_ALCHEMY_API_KEY}`, 'https://mainnet.base.org']};
 
 // 导出 alchemy 实例以便直接使用
 export { alchemy }; 
