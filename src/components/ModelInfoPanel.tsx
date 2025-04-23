@@ -26,11 +26,12 @@ const ModelInfoPanel: React.FC<ModelInfoPanelProps> = ({ model }) => {
   const showGeneratePopup = useSetAtom(showGeneratePopupAtom);
   const setTokenizationFlag = useSetAtom(setModelFlag);
   const fetchState = useSetAtom(fetchTokenizationState);
-  
+
   // 检查当前用户是否是模型创建者
-  const isFlag = model.flag !== null && model.flag !== ""
-  const isShowToken = accountState.did === model.creator && !isFlag;
-  
+  // const isFlag = model.flag !== null && model.flag !== ""
+  // const isShowToken = accountState.did === model.creator && !isFlag;
+  const isShowToken = false;
+
   // 获取Twitter显示名称
   const getDisplayName = () => {
     if (model.users.twitter?.name) {
@@ -42,7 +43,7 @@ const ModelInfoPanel: React.FC<ModelInfoPanelProps> = ({ model }) => {
       return model.creator.substring(0, 6) + '...' + model.creator.substring(model.creator.length - 4);
     }
   };
-  
+
   // 获取头像URL
   const getAvatarUrl = () => {
     if (model.users.twitter?.profilePictureUrl) {
@@ -54,7 +55,7 @@ const ModelInfoPanel: React.FC<ModelInfoPanelProps> = ({ model }) => {
       return avatarSvg;
     }
   };
-  
+
   // 格式化时间
   const formatCreationTime = (dateStr: string) => {
     const date = new Date(dateStr);
@@ -64,12 +65,12 @@ const ModelInfoPanel: React.FC<ModelInfoPanelProps> = ({ model }) => {
       day: '2-digit'
     }).replace(/\//g, '.');
   };
-  
+
   // 获取LoraName
   const getLoraName = () => {
     return model.model_tran?.[0]?.lora_name || 'Unknown';
   };
-  
+
   // 获取训练状态
   const getTrainingStatus = () => {
     const trainState = model.model_tran?.[0]?.train_state;
@@ -79,23 +80,23 @@ const ModelInfoPanel: React.FC<ModelInfoPanelProps> = ({ model }) => {
       return { text: 'Training', className: styles.statusTrain, isReady: false };
     }
   };
-  
+
   const status = getTrainingStatus();
-  
+
   const handleGenerate = () => {
     // 打开生成弹窗，传入模型信息
     showGeneratePopup(accountState.did, model);
   };
-  
+
   const handleShare = () => {
     // 获取当前页面URL
     const currentUrl = window.location.href;
-    
+
     // 确保URL包含模型ID和名称参数
     const url = new URL(currentUrl);
     url.searchParams.set('model_id', model.id.toString());
     url.searchParams.set('model_name', model.name);
-    
+
     // 复制到剪贴板
     navigator.clipboard.writeText(url.toString())
       .then(() => {
@@ -113,7 +114,7 @@ const ModelInfoPanel: React.FC<ModelInfoPanelProps> = ({ model }) => {
         });
       });
   };
-  
+
   const handleToken = async () => {
     // 发起 token 化请求
     const flag = 'tokenization'
@@ -127,21 +128,21 @@ const ModelInfoPanel: React.FC<ModelInfoPanelProps> = ({ model }) => {
   const handleTwitterClick = () => {
     console.log('Twitter clicked');
     // 实现Twitter点击功能
-    if (model.users.twitter?.username) {  
+    if (model.users.twitter?.username) {
       window.open(`https://twitter.com/${model.users.twitter?.username}`, '_blank');
     } else {
       console.log('No Twitter username found');
     }
   };
-  
+
   return (
     <div className={styles.infoPanel}>
       {/* 第一行: 创建者信息 */}
       <div className={styles.creatorHeader}>
         <div className={styles.creatorInfo}>
-          <img 
-            src={getAvatarUrl()} 
-            alt="Creator Avatar" 
+          <img
+            src={getAvatarUrl()}
+            alt="Creator Avatar"
             className={styles.creatorAvatar}
             onError={(e) => {
               (e.target as HTMLImageElement).src = avatarSvg;
@@ -149,14 +150,14 @@ const ModelInfoPanel: React.FC<ModelInfoPanelProps> = ({ model }) => {
           />
           <span className={styles.creatorName}>{getDisplayName()}</span>
         </div>
-        
+
         {model.users.twitter && (
           <button className={styles.twitterButton} onClick={handleTwitterClick}>
             <img src={twitterSvg} alt="Twitter" className={styles.twitterIcon} />
           </button>
         )}
       </div>
-      
+
       {/* 第二行: 模型详细信息 */}
       <div className={styles.modelDetailsContainer}>
         {/* Type */}
@@ -164,57 +165,57 @@ const ModelInfoPanel: React.FC<ModelInfoPanelProps> = ({ model }) => {
           <span className={styles.detailLabel}>Type</span>
           <span className={styles.detailValue}>Lora</span>
         </div>
-        
+
         {/* Keyword (Lora Name) */}
         <div className={styles.detailRow}>
           <span className={styles.detailLabel}>Keyword</span>
           <span className={styles.detailValue}>{getLoraName()}</span>
         </div>
-        
+
         {/* Used */}
         <div className={styles.detailRow}>
           <span className={styles.detailLabel}>Used</span>
           <span className={styles.detailValue}>{model.usage}</span>
         </div>
-        
+
         {/* Published */}
         <div className={styles.detailRow}>
           <span className={styles.detailLabel}>Published</span>
           <span className={styles.detailValue}>{formatCreationTime(model.created_at)}</span>
         </div>
-        
+
         {/* Status */}
         <div className={`${styles.detailRow} ${styles.lastRow}`}>
           <span className={styles.detailLabel}>Status</span>
           <span className={`${styles.detailValue} ${status.className}`}>{status.text}</span>
         </div>
       </div>
-      
+
       {/* 按钮组 */}
       <div className={styles.actionButtonsContainer}>
         {status.isReady ? (
           <>
             {/* Ready状态下的生成按钮 */}
-            <button 
-              className={styles.generateButton} 
+            <button
+              className={styles.generateButton}
               onClick={handleGenerate}
             >
               <img src={createSvg} alt="Generate" className={styles.buttonIcon} />
               <span>Generate</span>
             </button>
-            
+
             {/* 分享按钮 */}
-            <button 
-              className={styles.shareButton} 
+            <button
+              className={styles.shareButton}
               onClick={handleShare}
             >
               <img src={shareSvg} alt="Share" className={styles.buttonIcon} />
             </button>
-            
+
             {/* Token按钮 - 仅当用户是模型创建者时显示 */}
             {isShowToken && (
-              <button 
-                className={styles.mintButton} 
+              <button
+                className={styles.mintButton}
                 onClick={handleToken}
               >
                 <img src={coinsSvg} alt="Token" className={styles.buttonIcon} />
@@ -224,17 +225,17 @@ const ModelInfoPanel: React.FC<ModelInfoPanelProps> = ({ model }) => {
         ) : (
           <>
             {/* 训练中状态按钮 */}
-            <button 
-              className={styles.trainingButton} 
+            <button
+              className={styles.trainingButton}
               disabled
             >
               <img src={codeSvg} alt="Code" className={styles.buttonIcon} />
               <span>Training...</span>
             </button>
-            
+
             {/* 分享按钮 */}
-            <button 
-              className={styles.shareButton} 
+            <button
+              className={styles.shareButton}
               onClick={handleShare}
             >
               <img src={shareSvg} alt="Share" className={styles.buttonIcon} />

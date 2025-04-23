@@ -13,11 +13,11 @@ const ModelCard: React.FC<ModelCardProps> = ({ model }) => {
   const formatNumber = (num: number) => {
     return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   };
-  
+
   // 检查是否在训练中
   const isTraining = model.model_tran[0]?.train_state === 0 || model.model_tran[0]?.train_state === 1;
   // isTokenization
-  const isTokenization = model.model_tran[0]?.train_state === 2 && model.model_tokenization;
+  // const isTokenization = model.model_tran[0]?.train_state === 2 && model.model_tokenization;
 
   // 获取Twitter显示名称
   const getDisplayName = () => {
@@ -47,30 +47,30 @@ const ModelCard: React.FC<ModelCardProps> = ({ model }) => {
     <div className={styles.modelCard}>
       <div className={styles.modelCover}>
         <img src={model.cover} alt={model.name} />
-        
+
         <div className={styles.tagsContainer}>
           {isTraining && (
             <div className={styles.trainingTag}>
               Training
             </div>
           )}
-          
-          {isTokenization && (
+
+          {/*isTokenization && (
             <>
               <div className={styles.completedTag}>${model.model_tokenization?.metadata?.name ?? 'Token'}</div>
             </>
-          )}
+          )*/}
         </div>
       </div>
-      
+
       <div className={styles.modelInfo}>
         <h3 className={styles.modelName}>{model.name}</h3>
-        
+
         <div className={styles.modelMeta}>
           <div className={styles.twitterInfo}>
-            <img 
-              src={getAvatarUrl()} 
-              alt="Avatar" 
+            <img
+              src={getAvatarUrl()}
+              alt="Avatar"
               className={styles.twitterAvatar}
               onError={(e) => {
                 (e.target as HTMLImageElement).src = avatarSvg;
@@ -80,7 +80,7 @@ const ModelCard: React.FC<ModelCardProps> = ({ model }) => {
               {getDisplayName()}
             </span>
           </div>
-          
+
           <div className={styles.usageInfo}>
             <img src={usageSvg} alt="Usage" className={styles.usageIcon} />
             <span className={styles.usageCount}>{formatNumber(model.usage)}</span>
@@ -91,4 +91,4 @@ const ModelCard: React.FC<ModelCardProps> = ({ model }) => {
   );
 };
 
-export default ModelCard; 
+export default ModelCard;
