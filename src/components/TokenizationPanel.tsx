@@ -14,7 +14,7 @@ import copySvg from '../assets/copy_address.svg';
 import {accountAtom} from "../store/accountStore.ts";
 import {ModelDetail} from '../store/modelStore';
 import {showToastAtom} from "../store/imagesStore.ts";
-import UniswapWidget from './UniswapWidge.tsx';
+import SwapWidgetCustom from './SwapWidgetCustom.tsx';
 
 interface TokenizationPanelProps {
   model: ModelDetail;
@@ -302,7 +302,7 @@ const TokenizationPanel: React.FC<TokenizationPanelProps> = memo(({
                     </iframe>
                 </div>
                 <div className={`${styles.rightIframeWrapper} Uniswap`}>
-                   <UniswapWidget token={token} />
+                  <SwapWidgetCustom token={token} />
                 </div>
             </div>
           </div>

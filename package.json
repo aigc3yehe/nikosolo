@@ -12,8 +12,11 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.758.0",
     "@aws-sdk/lib-storage": "^3.758.0",
+    "@delvtech/drift": "^0.3.0",
+    "@delvtech/drift-viem": "^0.3.0",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
+    "@flaunch/sdk": "^0.3.1",
     "@mui/icons-material": "^6.4.8",
     "@mui/material": "^6.4.8",
     "@privy-io/react-auth": "^2.6.4",
@@ -33,7 +36,7 @@
     "react-dom": "^19.0.0",
     "react-redux": "^9.2.0",
     "react-router-dom": "^7.3.0",
-    "viem": "^2.23.12",
+    "viem": "^2.28.0",
     "vite-plugin-node-polyfills": "^0.23.0",
     "wagmi": "^2.14.13"
   },

@@ -2,6 +2,7 @@ import {base, mainnet, sepolia} from 'viem/chains';
 import {http} from 'wagmi';
 
 import {createConfig} from '@privy-io/wagmi';
+import { createPublicClient } from 'viem';
 
 // Replace these with your app's chains
 
@@ -12,4 +13,9 @@ export const wagmiConfig = createConfig({
     [mainnet.id]: http(),
     [sepolia.id]: http(),
   },
+});
+
+export const publicClient = createPublicClient({
+  chain: base,
+  transport: http(),
 });

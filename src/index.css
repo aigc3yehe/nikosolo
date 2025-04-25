@@ -91,3 +91,13 @@ html {
     font-size: 14px; /* 可根据需要调整小屏幕的基础字体大小 */
   }
 }
+
+.no-spinner::-webkit-outer-spin-button,
+.no-spinner::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.no-spinner {
+  -moz-appearance: textfield; /* Firefox */
+}
