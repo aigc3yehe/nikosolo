@@ -233,7 +233,6 @@ const SwapWidgetCustom = ({ token }: Props) => {
 
   const handleSwap = async () => {
     if (loading || txLoading) return;
-
     // 提取公共变量
     const isBuy = direction === "buy";
     const requiredAmount = parseEther(inputAmount || "0");
