@@ -209,6 +209,11 @@ const SwapWidgetCustom = ({ token }: Props) => {
     }
   }, [walletClient?.account?.address, direction]);
 
+  const clearInputState = () => {
+    setInputAmount("");
+    setOutputAmount("");
+  };
+
   // 处理Max按钮点击
   const handleMaxClick = () => {
     if (direction === "buy") {
@@ -228,7 +233,7 @@ const SwapWidgetCustom = ({ token }: Props) => {
 
   const handleSwap = async () => {
     if (loading || txLoading) return;
-    
+
     // 提取公共变量
     const isBuy = direction === "buy";
     const requiredAmount = parseEther(inputAmount || "0");
@@ -258,6 +263,7 @@ const SwapWidgetCustom = ({ token }: Props) => {
             alert(`Transaction successful: ${receipt?.transactionHash}`);
             setTxLoading(false);
             await fetchBalances(); // 交易成功后刷新余额
+            clearInputState();
           }
         }
         if (direction === "buy" && txType == "EXACT_OUT") {
@@ -275,6 +281,7 @@ const SwapWidgetCustom = ({ token }: Props) => {
             alert(`Transaction successful: ${receipt?.transactionHash}`);
             setTxLoading(false);
             await fetchBalances(); // 交易成功后刷新余额
+            clearInputState();
           }
         }
         if (direction === "sell") {
@@ -307,6 +314,7 @@ const SwapWidgetCustom = ({ token }: Props) => {
                 alert(`Transaction successful: ${receipt?.transactionHash}`);
                 setTxLoading(false);
                 await fetchBalances(); // 交易成功后刷新余额
+                clearInputState();
               }
             }
           } else {
@@ -323,6 +331,7 @@ const SwapWidgetCustom = ({ token }: Props) => {
               alert(`Transaction successful: ${receipt?.transactionHash}`);
               setTxLoading(false);
               await fetchBalances(); // 交易成功后刷新余额
+              clearInputState();
             }
           }
         }
@@ -389,8 +398,7 @@ const SwapWidgetCustom = ({ token }: Props) => {
               />
               <button
                 onClick={() => {
-                  setInputAmount("0.0");
-                  setOutputAmount("0.0");
+                  clearInputState();
                   setShowSettings(false);
                 }}
                 className="bg-[#6366F1] px-4 py-2 rounded-lg hover:brightness-125"
