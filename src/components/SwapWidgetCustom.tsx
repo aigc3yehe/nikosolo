@@ -228,6 +228,18 @@ const SwapWidgetCustom = ({ token }: Props) => {
 
   const handleSwap = async () => {
     if (loading || txLoading) return;
+    
+    // 提取公共变量
+    const isBuy = direction === "buy";
+    const requiredAmount = parseEther(inputAmount || "0");
+    const currentBalance = isBuy ? ethBalance : tokenBalance;
+    const assetName = isBuy ? "ETH" : token.symbol;
+
+    if (currentBalance < requiredAmount) {
+      alert(`Insufficient ${assetName} balance`);
+      return;
+    }
+
     try {
       if (authenticated && ready) {
         setTxLoading(true);
@@ -322,14 +334,18 @@ const SwapWidgetCustom = ({ token }: Props) => {
     }
   };
 
+  // 公共余额检查逻辑
+  const isBuy = direction === "buy";
+  const requiredAmount = parseEther(inputAmount || "0");
+  const currentBalance = isBuy ? ethBalance : tokenBalance;
+  const assetName = isBuy ? "ETH" : token.symbol;
+  const isInsufficient = currentBalance < requiredAmount;
+
   const btnLabel = () => {
     if (authenticated && ready) {
-      if (loading) {
-        return "Calculating...";
-      }
-      if (txLoading) {
-        return "Swapping...";
-      }
+      if (loading) return "Calculating...";
+      if (txLoading) return "Swapping...";
+      if (isInsufficient) return `Insufficient ${assetName}`;
       return "Swap";
     }
     return "Login";
@@ -471,9 +487,9 @@ const SwapWidgetCustom = ({ token }: Props) => {
 
       {/* Swap Button */}
       <button
-        disabled={loading || txLoading}
+        disabled={loading || txLoading || isInsufficient}
         className={`w-full py-2 mt-6 rounded-lg hover:brightness-125 ${
-          loading || txLoading ? "grayscale" : ""
+          loading || txLoading || isInsufficient ? "grayscale" : ""
         } bg-[#6366F1] text-white`}
         onClick={handleSwap}
       >
