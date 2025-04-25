@@ -13,7 +13,8 @@ import { createDrift } from "@delvtech/drift";
 import { publicClient } from "../providers/wagmiConfig";
 import { usePrivy, useWallets } from "@privy-io/react-auth";
 import { createWalletClient, custom, formatEther, Hex, parseEther } from "viem";
-import { getAmountWithSlippage } from "../utils/format";
+import { formattedBalance, getAmountWithSlippage } from "../utils/format";
+import { getEthBalance, getTokenBalance } from "../store/alchemyStore";
 
 interface Props {
   token: TokenInfo;
@@ -27,12 +28,17 @@ const SwapWidgetCustom = ({ token }: Props) => {
   const [outputAmount, setOutputAmount] = useState("");
   const [slippage, setSlippage] = useState("5");
   const [loading, setLoading] = useState(false);
+  const [ethBalance, setEthBalance] = useState<bigint>(0n);
+  const [tokenBalance, setTokenBalance] = useState<bigint>(0n);
   const { wallets } = useWallets();
   const [walletClient, setWalletClient] = useAtom(walletClientAtom);
   const { authenticated, ready, login } = usePrivy();
   const [txType, setTxType] = useState<"EXACT_IN" | "EXACT_OUT" | "SELL">(
     "EXACT_IN"
   );
+  const [, fetchEthBalance] = useAtom(getEthBalance);
+  const [, fetchTokenBalance] = useAtom(getTokenBalance);
+  const [txLoading, setTxLoading] = useState(false);
 
   const flaunchWrite = useMemo(() => {
     if (walletClient) {
@@ -89,9 +95,10 @@ const SwapWidgetCustom = ({ token }: Props) => {
         }
       }
       if (direction === "sell") {
+        fetchRate(value, isInput);
         setTxType("SELL");
       }
-    }, 1200);
+    }, 1000);
     setDebounceTimer(newTimer);
   };
 
@@ -145,9 +152,9 @@ const SwapWidgetCustom = ({ token }: Props) => {
       const ethOutMin = getAmountWithSlippage(
         data,
         (parseFloat(slippage) / 100).toFixed(18).toString(),
-        "EXACT_OUT"
+        "EXACT_IN"
       );
-      console.debug("[FLAUNCH]:", "EXACT_IN", data, ethOutMin);
+      console.debug("[FLAUNCH]:", "SELL", data, ethOutMin);
       setOutputAmount(formatEther(ethOutMin ?? 0n));
     }
   };
@@ -166,10 +173,64 @@ const SwapWidgetCustom = ({ token }: Props) => {
     }
   };
 
+  // 获取余额
+  const fetchBalances = async () => {
+    if (!walletClient?.account?.address) return;
+
+    const address = walletClient.account.address;
+
+    try {
+      if (direction === "buy") {
+        const ethBalance = await fetchEthBalance({ addressOrName: address });
+        setEthBalance(parseEther(ethBalance));
+        const tokenBalance = await fetchTokenBalance({
+          addressOrName: address,
+          contractAddress: token.address,
+        });
+        setTokenBalance(parseEther(tokenBalance));
+      } else {
+        const tokenBalance = await fetchTokenBalance({
+          addressOrName: address,
+          contractAddress: token.address,
+        });
+        setTokenBalance(parseEther(tokenBalance));
+        const ethBalance = await fetchEthBalance({ addressOrName: address });
+        setEthBalance(parseEther(ethBalance));
+      }
+    } catch (error) {
+      console.error("Failed to fetch balances:", error);
+    }
+  };
+
+  // 初始化获取余额
+  useEffect(() => {
+    if (walletClient?.account?.address) {
+      fetchBalances();
+    }
+  }, [walletClient?.account?.address, direction]);
+
+  // 处理Max按钮点击
+  const handleMaxClick = () => {
+    if (direction === "buy") {
+      if (!ethBalance) return;
+      const maxValue = formatEther(ethBalance - (ethBalance / 100n) * 5n); // 保留5%作为gas费
+      setInputAmount(maxValue);
+      handleAmountChange("from", maxValue, true);
+    }
+    if (direction === "sell") {
+      if (!tokenBalance) return;
+      const maxValue = formatEther(tokenBalance);
+      setInputAmount(maxValue);
+      console.debug("[FLAUNCH] MAX", tokenBalance.toString(), maxValue);
+      handleAmountChange("from", maxValue, false);
+    }
+  };
+
   const handleSwap = async () => {
-    if (loading) return;
+    if (loading || txLoading) return;
     try {
       if (authenticated && ready) {
+        setTxLoading(true);
         if (direction === "buy" && txType == "EXACT_IN") {
           const hash = await flaunchWrite?.buyCoin({
             coinAddress: token.address as `0x${string}`,
@@ -183,6 +244,8 @@ const SwapWidgetCustom = ({ token }: Props) => {
             });
             console.log("Transaction receipt:", receipt);
             alert(`Transaction successful: ${receipt?.transactionHash}`);
+            setTxLoading(false);
+            await fetchBalances(); // 交易成功后刷新余额
           }
         }
         if (direction === "buy" && txType == "EXACT_OUT") {
@@ -198,27 +261,78 @@ const SwapWidgetCustom = ({ token }: Props) => {
             });
             console.log("Transaction receipt:", receipt);
             alert(`Transaction successful: ${receipt?.transactionHash}`);
+            setTxLoading(false);
+            await fetchBalances(); // 交易成功后刷新余额
           }
         }
         if (direction === "sell") {
-          const hash = await flaunchWrite?.sellCoin({
-            coinAddress: token.address as `0x${string}`,
-            amountIn: parseEther(inputAmount),
-            slippagePercent: parseFloat(slippage),
-          });
-          if (hash) {
-            const receipt = await flaunchWrite?.drift.waitForTransaction({
-              hash,
+          if (flaunchWrite && token.address) {
+            const { allowance } =
+              await flaunchWrite.getPermit2AllowanceAndNonce(
+                token.address as `0x${string}`
+              );
+            if (allowance < parseEther(inputAmount)) {
+              const { typedData, permitSingle } =
+                await flaunchWrite.getPermit2TypedData(
+                  token.address as `0x${string}`
+                );
+              const signature = await walletClient?.signTypedData({
+                ...typedData,
+                account: walletClient.account?.address as `0x${string}`,
+              });
+              const hash = await flaunchWrite.sellCoin({
+                coinAddress: token.address as `0x${string}`,
+                amountIn: parseEther(inputAmount),
+                slippagePercent: parseFloat(slippage),
+                permitSingle,
+                signature,
+              });
+              if (hash) {
+                const receipt = await flaunchWrite?.drift.waitForTransaction({
+                  hash,
+                });
+                console.log("Transaction receipt:", receipt);
+                alert(`Transaction successful: ${receipt?.transactionHash}`);
+                setTxLoading(false);
+                await fetchBalances(); // 交易成功后刷新余额
+              }
+            }
+          } else {
+            const hash = await flaunchWrite?.sellCoin({
+              coinAddress: token.address as `0x${string}`,
+              amountIn: parseEther(inputAmount),
+              slippagePercent: parseFloat(slippage),
             });
-            console.log("Transaction receipt:", receipt);
-            alert(`Transaction successful: ${receipt?.transactionHash}`);
+            if (hash) {
+              const receipt = await flaunchWrite?.drift.waitForTransaction({
+                hash,
+              });
+              console.log("Transaction receipt:", receipt);
+              alert(`Transaction successful: ${receipt?.transactionHash}`);
+              setTxLoading(false);
+              await fetchBalances(); // 交易成功后刷新余额
+            }
           }
         }
       }
       login();
     } catch (error) {
       console.error("Failed to swap:", error);
+      setTxLoading(false);
     }
+  };
+
+  const btnLabel = () => {
+    if (authenticated && ready) {
+      if (loading) {
+        return "Calculating...";
+      }
+      if (txLoading) {
+        return "Swapping...";
+      }
+      return "Swap";
+    }
+    return "Login";
   };
 
   return (
@@ -249,16 +363,20 @@ const SwapWidgetCustom = ({ token }: Props) => {
               <input
                 type="number"
                 value={slippage}
-                onChange={(e) =>
-                  handleNumberValueChange(e.target.value, setSlippage)
-                }
+                onChange={(e) => {
+                  handleNumberValueChange(e.target.value, setSlippage);
+                }}
                 className="bg-gray-800 p-2 rounded flex-1 outline-none no-spinner"
                 step={1}
                 min={1}
                 max={100}
               />
               <button
-                onClick={() => setShowSettings(false)}
+                onClick={() => {
+                  setInputAmount("0.0");
+                  setOutputAmount("0.0");
+                  setShowSettings(false);
+                }}
                 className="bg-[#6366F1] px-4 py-2 rounded-lg hover:brightness-125"
               >
                 OK
@@ -293,10 +411,23 @@ const SwapWidgetCustom = ({ token }: Props) => {
                   handleNumberValueChange(e.target.value, setInputAmount);
                   handleAmountChange("from", value, true);
                 }}
-                className="w-full bg-transparent text-xl pr-12 outline-none no-spinner"
+                className="w-full bg-transparent text-xl pr-[100px] outline-none no-spinner"
                 placeholder="0.0"
-                disabled={loading}
+                disabled={loading || txLoading}
               />
+              <div className="absolute right-0 top-1/2 -translate-y-1/2 flex items-center gap-1 text-[12px]">
+                <button
+                  onClick={() => handleMaxClick()}
+                  className="bg-gray-700 px-1 rounded hover:bg-gray-600"
+                >
+                  Max
+                </button>
+                <span>
+                  {direction === "buy"
+                    ? formattedBalance(ethBalance)
+                    : formattedBalance(tokenBalance)}
+                </span>
+              </div>
             </div>
           </div>
 
@@ -332,7 +463,7 @@ const SwapWidgetCustom = ({ token }: Props) => {
               }}
               className="w-full bg-transparent text-xl outline-none no-spinner"
               placeholder="0.0"
-              disabled={direction === "sell" || loading}
+              disabled={direction === "sell" || loading || txLoading}
             />
           </div>
         </div>
@@ -340,17 +471,13 @@ const SwapWidgetCustom = ({ token }: Props) => {
 
       {/* Swap Button */}
       <button
-        disabled={loading}
+        disabled={loading || txLoading}
         className={`w-full py-2 mt-6 rounded-lg hover:brightness-125 ${
-          loading ? "grayscale" : ""
+          loading || txLoading ? "grayscale" : ""
         } bg-[#6366F1] text-white`}
         onClick={handleSwap}
       >
-        {authenticated && ready
-          ? loading
-            ? "Calculating..."
-            : "Swap"
-          : "Login"}
+        {btnLabel()}
       </button>
     </div>
   );
