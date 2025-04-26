@@ -388,7 +388,7 @@ const SwapWidgetCustom = ({ token }: Props) => {
   return (
     <div className="bg-[#0E111B] p-4 rounded-lg">
       {/* 标题 */}
-      <div className="flex justify-between items-center mb-4 relative">
+      <div className="flex justify-between items-center mb-6 relative">
         <h2 className="text-xl font-semibold">Swap Tokens</h2>
         <button
           onClick={() => setShowSettings(!showSettings)}
@@ -437,11 +437,11 @@ const SwapWidgetCustom = ({ token }: Props) => {
 
       {/* Input Section */}
       {/* 输入Token */}
-      <div className="flex flex-col items-center relative w-full">
-        <div className="space-y-4 w-full">
+      <div className="flex flex-col items-center relative w-full mb-6">
+        <div className="space-y-6 w-full">
           <div className="bg-gray-900 p-3 rounded">
             <div className="flex justify-between items-center mb-2">
-              <span>{direction === "buy" ? "From" : "Sell"}</span>
+              <span className="text-lg">{direction === "buy" ? "From" : "Sell"}</span>
               <div className="flex items-center gap-2">
                 <TokenIcon
                   logoURI={
@@ -463,6 +463,7 @@ const SwapWidgetCustom = ({ token }: Props) => {
                 className="w-full bg-transparent text-xl pr-[100px] outline-none no-spinner"
                 placeholder="0.0"
                 disabled={loading || txLoading}
+                style={{ fontSize: '22px'}}
               />
               <div className="absolute right-0 top-1/2 -translate-y-1/2 flex items-center gap-1 text-[12px]">
                 <button
@@ -483,7 +484,7 @@ const SwapWidgetCustom = ({ token }: Props) => {
           {/* 买入卖出方向切换 */}
           <button
             onClick={handleSwitchDirection}
-            className="absolute top-[41%] -translate-x-1/2 -translate-y-1/2 bg-gray-800 w-9 h-9 rounded-xl hover:bg-gray-700 border border-[#3741514D]"
+            className="absolute top-[38%] -translate-x-1/2 -translate-y-1/2 bg-gray-800 w-10 h-10 rounded-xl hover:bg-gray-700 border border-[#3741514D]"
           >
             <SwapVert sx={{ fontSize: 20, color: "white" }} />
           </button>
@@ -491,7 +492,7 @@ const SwapWidgetCustom = ({ token }: Props) => {
           {/* 输出Token */}
           <div className="bg-gray-900 p-3 rounded w-full">
             <div className="flex justify-between items-center mb-2">
-              <span>{direction === "buy" ? "To" : "Receive"}</span>
+              <span className="text-lg">{direction === "buy" ? "To" : "Receive"}</span>
               <div className="flex items-center gap-2">
                 <TokenIcon
                   logoURI={
@@ -513,6 +514,7 @@ const SwapWidgetCustom = ({ token }: Props) => {
               className="w-full bg-transparent text-xl outline-none no-spinner"
               placeholder="0.0"
               disabled={direction === "sell" || loading || txLoading}
+              style={{ fontSize: '22px'}}
             />
           </div>
         </div>
