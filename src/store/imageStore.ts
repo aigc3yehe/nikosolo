@@ -20,6 +20,7 @@ export interface Image {
   width: number;
   height: number;
   state: number; // -1: 失败, 0: 待处理, 1: 成功
+  public: number; // 1 为可见的 0是相关人员关闭了的
   users: {
     twitter: Twitter | null;
     address: string | null;
@@ -65,20 +66,22 @@ export const imageListAtom = atom<ImageListState>(initialState);
 // 获取图片列表
 export const fetchImages = atom(
   null,
-  async (get, set, { 
-    reset = false, 
+  async (get, set, {
+    reset = false,
     ownedOnly = false,
     model_id,
-    state
-  }: { 
-    reset?: boolean, 
+    state,
+    view
+  }: {
+    reset?: boolean,
     ownedOnly?: boolean,
     model_id?: number,
-    state?: ImageState
+    state?: ImageState,
+    view?: boolean
   } = {}) => {
     const imageState = get(imageListAtom);
     const accountState = get(accountAtom);
-    
+
     // 如果重置或者还有更多数据可加载
     if (reset || imageState.hasMore) {
       // 设置为加载中
@@ -92,7 +95,7 @@ export const fetchImages = atom(
         model_id,
         state
       });
-      
+
       try {
         // 构建查询参数
         const params = new URLSearchParams({
@@ -101,35 +104,39 @@ export const fetchImages = atom(
           order: imageState.order,
           desc: imageState.desc
         });
-        
+
         // 如果是owned模式，添加user参数
         if (ownedOnly && accountState.did) {
           params.append('user', accountState.did);
         }
-        
+
         // 添加可选的model_id参数
         if (model_id !== undefined) {
           params.append('model_id', model_id.toString());
         }
-        
+
         // 添加可选的state参数
         if (state) {
           params.append('state', state);
         }
-        
+
+        if (view) {
+          params.append('view', view.toString());
+        }
+
         // 发送请求
         const response = await fetch(`/studio-api/model/list/gallery?${params.toString()}`, {
           headers: {
             'Authorization': `Bearer ${import.meta.env.VITE_BEARER_TOKEN}`
           }
         });
-        
+
         if (!response.ok) {
           throw new Error('获取图片列表失败');
         }
-        
+
         const result = await response.json();
-        
+
         // 更新状态
         set(imageListAtom, {
           ...imageState,
@@ -156,7 +163,7 @@ export const changeImageOrder = atom(
   null,
   (get, set, newOrder: ImageOrderType) => {
     const state = get(imageListAtom);
-    
+
     set(imageListAtom, {
       ...state,
       order: newOrder,
@@ -164,7 +171,7 @@ export const changeImageOrder = atom(
       images: [], // 清空当前图片列表
       hasMore: true // 重置是否有更多数据
     });
-    
+
     // 重新获取数据
     // @ts-ignore
     get(fetchImages)({ reset: true });
@@ -176,7 +183,7 @@ export const changeImageOrderDirection = atom(
   null,
   (get, set, newDirection: OrderDirection) => {
     const state = get(imageListAtom);
-    
+
     set(imageListAtom, {
       ...state,
       desc: newDirection,
@@ -184,7 +191,7 @@ export const changeImageOrderDirection = atom(
       images: [],
       hasMore: true
     });
-    
+
     // @ts-ignore
     get(fetchImages)({ reset: true });
   }
@@ -195,7 +202,7 @@ export const filterByModelId = atom(
   null,
   (get, set, model_id?: number) => {
     const state = get(imageListAtom);
-    
+
     set(imageListAtom, {
       ...state,
       model_id,
@@ -203,7 +210,7 @@ export const filterByModelId = atom(
       images: [],
       hasMore: true
     });
-    
+
     // @ts-ignore
     get(fetchImages)({ reset: true, model_id });
   }
@@ -214,7 +221,7 @@ export const filterByState = atom(
   null,
   (get, set, state?: ImageState) => {
     const imageState = get(imageListAtom);
-    
+
     set(imageListAtom, {
       ...imageState,
       state,
@@ -222,7 +229,7 @@ export const filterByState = atom(
       images: [],
       hasMore: true
     });
-    
+
     // @ts-ignore
     get(fetchImages)({ reset: true, state });
   }
@@ -257,26 +264,26 @@ export interface ImageDetail {
 // 获取图片详情
 export const fetchImageDetail = async (imageId: number): Promise<ImageDetail> => {
   try {
-    
+
     const response = await fetch(`/studio-api/aigc/image?image_id=${imageId}`, {
       headers: {
         'Authorization': `Bearer ${import.meta.env.VITE_BEARER_TOKEN}`
       }
     });
-    
+
     if (!response.ok) {
       throw new Error(`获取图片详情失败: ${response.statusText}`);
     }
-    
+
     const result = await response.json();
-    
+
     if (!result.data) {
       throw new Error('图片详情数据格式无效');
     }
-    
+
     return result.data;
   } catch (error) {
     console.error('获取图片详情出错:', error);
     throw error;
   }
-}; 
+};

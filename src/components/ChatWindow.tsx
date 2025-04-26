@@ -34,12 +34,12 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ uuid, did }) => {
   const [, checkConnection] = useAtom(checkConnectionStatus);
   const [, startHeartbeatAction] = useAtom(startHeartbeat);
   const [, stopHeartbeatAction] = useAtom(stopHeartbeat);
-  
+
   // 添加滚动相关状态
   const [scrollHeight, setScrollHeight] = useState(0);
   const [scrollTop, setScrollTop] = useState(0);
   const [clientHeight, setClientHeight] = useState(0);
-  
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const customScrollbarRef = useRef<HTMLDivElement>(null);
@@ -49,9 +49,9 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ uuid, did }) => {
     onComplete: async ({ user }) => {
       console.log('登录成功', user);
       if (user) {
-        setUserInfoAction({ 
-          uuid, 
-          did: user.id 
+        setUserInfoAction({
+          uuid,
+          did: user.id
         });
       }
     },
@@ -102,7 +102,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ uuid, did }) => {
   useEffect(() => {
     // 滚动到最新消息
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    
+
     // 更新滚动状态
     if (messagesContainerRef.current) {
       setScrollHeight(messagesContainerRef.current.scrollHeight);
@@ -127,26 +127,26 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ uuid, did }) => {
   // 处理自定义滚动条拖动
   const handleScrollThumbDrag = (e: React.MouseEvent<HTMLDivElement>) => {
     e.preventDefault();
-    
+
     const startY = e.clientY;
     const startScrollTop = scrollTop;
-    
+
     const handleMouseMove = (moveEvent: MouseEvent) => {
       if (messagesContainerRef.current) {
         const deltaY = moveEvent.clientY - startY;
         const scrollRatio = deltaY / clientHeight;
         const newScrollTop = startScrollTop + scrollRatio * scrollHeight;
-        
+
         messagesContainerRef.current.scrollTop = newScrollTop;
         setScrollTop(messagesContainerRef.current.scrollTop);
       }
     };
-    
+
     const handleMouseUp = () => {
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
-    
+
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
   };
@@ -156,7 +156,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ uuid, did }) => {
     if (scrollHeight <= clientHeight) return 0;
     return Math.max(30, (clientHeight / scrollHeight) * clientHeight);
   };
-  
+
   const getScrollThumbTop = () => {
     if (scrollHeight <= clientHeight) return 0;
     return (scrollTop / (scrollHeight - clientHeight)) * (clientHeight - getScrollThumbHeight());
@@ -180,19 +180,19 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ uuid, did }) => {
   // 管理心跳
   useEffect(() => {
     const isActive = chatState.connection?.isActive;
-    
+
     // 当连接状态变为活跃时启动心跳
     if (isActive && !chatState.heartbeatId) {
       console.log('启动心跳机制');
       startHeartbeatAction();
     }
-    
+
     // 当连接状态变为非活跃时停止心跳
     if (!isActive && chatState.heartbeatId) {
       console.log('停止心跳机制');
       stopHeartbeatAction();
     }
-    
+
     // 组件卸载时清理心跳
     return () => {
       if (chatState.heartbeatId) {
@@ -219,7 +219,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ uuid, did }) => {
 
       {/* 消息列表容器 */}
       <div className={styles.messagesContainerWrapper}>
-        <div 
+        <div
           ref={messagesContainerRef}
           className={`${styles.messagesContainer} ${styles.hideScrollbar}`}
         >
@@ -227,12 +227,12 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ uuid, did }) => {
             <div className={styles.emptyMessages}>
               <div className={styles.loginRequired}>
                 <p>Please login to start chatting with Niyoko</p>
-                <button 
+                <button
                   className={styles.loginButton}
                   onClick={handleLogin}
                   disabled={loginLoading}
                 >
-                  {loginLoading ? 'Logining...' : 'Login'}
+                  {loginLoading ? 'Logging...' : 'Login'}
                 </button>
               </div>
             </div>
@@ -246,7 +246,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ uuid, did }) => {
                   {estimateWaitTime && (
                     <p>Estimated waiting time: {Math.ceil(estimateWaitTime)} minutes</p>
                   )}
-                  <button 
+                  <button
                     className={styles.checkStatusButton}
                     onClick={handleCheckConnection}
                     disabled={chatState.isLoading}
@@ -257,7 +257,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ uuid, did }) => {
               ) : (
                 <div className={styles.queueStatus}>
                   <p>Waiting to connect to Niyoko...</p>
-                  <button 
+                  <button
                     className={styles.checkStatusButton}
                     onClick={handleCheckConnection}
                     disabled={chatState.isLoading}
@@ -269,7 +269,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ uuid, did }) => {
             </div>
           ) : (
             chatState.messages.map((message, index) => (
-              <ChatMessage 
+              <ChatMessage
                 key={index}
                 role={message.role as 'user' | 'assistant'}
                 content={message.content}
@@ -296,11 +296,11 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ uuid, did }) => {
           )}
           <div ref={messagesEndRef} />
         </div>
-        
+
         {/* 自定义滚动条 */}
         {showCustomScrollbar && (
           <div className={styles.messagesScrollbarTrack}>
-            <div 
+            <div
               ref={customScrollbarRef}
               className={styles.messagesScrollbarThumb}
               style={{

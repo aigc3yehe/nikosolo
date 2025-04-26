@@ -26,6 +26,7 @@ export interface Model {
   cover: string;
   usage: number;
   flag: string | null;
+  public?: number; // 1 为可视, 0为由所有者设置为不可视，-1则是系统管理员设置的不可见，级别最高
   model_tokenization: ModelToken | null;
   model_tran: {
     version: number;
@@ -77,7 +78,7 @@ export const modelListAtom = atom<ModelListState>(initialState);
 // 获取模型列表
 export const fetchModels = atom(
   null,
-  async (get, set, { reset = false, ownedOnly = false, order = "created_at" }: { reset?: boolean, ownedOnly?: boolean, order?: string } = {}) => {
+  async (get, set, { reset = false, ownedOnly = false, order = "created_at", view = undefined }: { reset?: boolean, ownedOnly?: boolean, order?: string, view?: boolean } = {}) => {
     const state = get(modelListAtom);
     const accountState = get(accountAtom);
 
@@ -92,7 +93,7 @@ export const fetchModels = atom(
         // 如果是重置，则页码为1，否则保持当前页
         page: reset ? 1 : state.page
       });
-      
+
       try {
         // 构建查询参数
         const params = new URLSearchParams({
@@ -101,30 +102,34 @@ export const fetchModels = atom(
           order: order as 'created_at' | 'usage',
           desc: state.desc
         });
-        
+
         // 如果是owned模式，添加user参数
         if (ownedOnly && accountState.did) {
           params.append('user', accountState.did);
         }
-        
+
+        if (view !== undefined) {
+          params.append('view', view.toString());
+        }
+
         // 根据owned状态选择不同的API端点
-        const endpoint = ownedOnly 
-          ? '/studio-api/model/list/owned' 
+        const endpoint = ownedOnly
+          ? '/studio-api/model/list/owned'
           : '/studio-api/model/list/enabled';
-        
+
         // 发送请求
         const response = await fetch(`${endpoint}?${params.toString()}`, {
           headers: {
             'Authorization': `Bearer ${import.meta.env.VITE_BEARER_TOKEN}`
           }
         });
-        
+
         if (!response.ok) {
           throw new Error('获取模型列表失败');
         }
-        
+
         const result = await response.json();
-        
+
         // 更新状态
         set(modelListAtom, {
           ...state,
@@ -145,6 +150,53 @@ export const fetchModels = atom(
       }
     }
   }
+);
+
+export async function toggleViewRequest(type: string, id: number, view_value: boolean, did?: string) {
+  const API_URL = "/studio-api/model/toggle_view";
+
+  try {
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${import.meta.env.VITE_BEARER_TOKEN}`
+      },
+      body: JSON.stringify({
+        type,
+        id,
+        'public': view_value,
+        user: did,
+      })
+    })
+
+    if (!res.ok) {
+      throw new Error(`API returned error status ${res.status}`);
+    }
+
+    return await res.json();
+  } catch (error) {
+    console.log(error);
+    throw error;
+  }
+}
+
+// 获取模型列表
+export const fetchToggleView = atom(
+    null,
+    async (get, _set, type: string, id: number, public_value: boolean) => {
+      const accountState = get(accountAtom);
+
+      try {
+        const did = accountState.did || undefined;
+        const response = await toggleViewRequest(type, id, public_value, did);
+        console.log('result', response);
+        return response; // 返回结果，以便在组件中使用Promise链
+      } catch (error) {
+        console.log(error);
+        throw error; // 抛出错误以便在组件中捕获
+      }
+    }
 );
 
 // 重置
@@ -190,26 +242,26 @@ export const fetchModelDetail = atom(
       isLoading: true,
       error: null
     });
-    
+
     try {
       const response = await fetch(`/studio-api/model/detail?id=${modelId}`, {
         headers: {
           'Authorization': `Bearer ${import.meta.env.VITE_BEARER_TOKEN}`
         }
       });
-      
+
       if (!response.ok) {
         throw new Error('获取模型详情失败');
       }
-      
+
       const result = await response.json();
-      
+
       set(modelDetailAtom, {
         currentModel: result.data,
         isLoading: false,
         error: null
       });
-      
+
       return result.data;
     } catch (error) {
       set(modelDetailAtom, {
@@ -217,7 +269,7 @@ export const fetchModelDetail = atom(
         isLoading: false,
         error: (error as Error).message
       });
-      
+
       throw error;
     }
   }
@@ -238,7 +290,7 @@ interface ModelIdAndNameState {
 }
 
 const initialModelIdAndNameState: ModelIdAndNameState = {
-  modelId: null,    
+  modelId: null,
   modelName: null
 };
 

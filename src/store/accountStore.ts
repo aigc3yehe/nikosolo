@@ -14,6 +14,9 @@ export interface AccountState {
   error: string | null;
   credits: number;
   did: string | null;
+  role: string | null;
+  name: string | null;
+  avatar: string | null;
 }
 
 // 初始账户状态
@@ -26,7 +29,10 @@ const initialState: AccountState = {
   isLoggedIn: false,
   error: null,
   credits: 0,
-  did: null
+  did: null,
+  role: 'user',
+  name: null,
+  avatar: null,
 };
 
 // 创建账户状态原子
@@ -40,17 +46,17 @@ export const setUser = atom(
       set(accountAtom, initialState);
       return;
     }
-    
+
     set(accountAtom, {
       ...get(accountAtom),
       isLoading: true
     });
-    
+
     try {
       // 获取钱包地址
       const walletAddress = user?.wallet?.address || null;
       const did = user?.id || null;
-      
+
       // 如果有DID，查询用户信息
       if (did) {
         const queryParams = { did };
@@ -59,10 +65,10 @@ export const setUser = atom(
           // @ts-ignore
           queryParams.address = walletAddress;
         }
-        
+
         try {
           const result = await queryUser(queryParams);
-          
+
           set(accountAtom, {
             user,
             twitter: result.data.twitter,
@@ -72,7 +78,10 @@ export const setUser = atom(
             isLoggedIn: true,
             error: null,
             credits: result.data.credit,
-            did
+            did,
+            role: result.data.role || 'user',
+            name: result.data.name || null,
+            avatar: result.data.avatar || null,
           });
         } catch (error) {
           // 如果查询失败，仍使用本地用户信息
@@ -90,7 +99,10 @@ export const setUser = atom(
             isLoggedIn: true,
             error: (error as Error).message,
             credits: 0,
-            did
+            did,
+            role: 'user',
+            name: null,
+            avatar: null,
           });
         }
       } else {
@@ -109,7 +121,10 @@ export const setUser = atom(
           isLoggedIn: true,
           error: null,
           credits: 0,
-          did
+          did,
+          role: 'user',
+          name: null,
+          avatar: null,
         });
       }
     } catch (error) {
@@ -127,7 +142,7 @@ export const setWalletAddress = atom(
   null,
   (get, set, address: string | null) => {
     const state = get(accountAtom);
-    
+
     set(accountAtom, {
       ...state,
       walletAddress: address
@@ -140,7 +155,7 @@ export const setLoading = atom(
   null,
   (get, set, isLoading: boolean) => {
     const state = get(accountAtom);
-    
+
     set(accountAtom, {
       ...state,
       isLoading
@@ -153,7 +168,7 @@ export const setError = atom(
   null,
   (get, set, error: string | null) => {
     const state = get(accountAtom);
-    
+
     set(accountAtom, {
       ...state,
       error
@@ -166,7 +181,7 @@ export const setCredits = atom(
   null,
   (get, set, credits: number) => {
     const state = get(accountAtom);
-    
+
     set(accountAtom, {
       ...state,
       credits
@@ -180,15 +195,15 @@ export const logout = atom(
   (get, set) => {
     // 重置账户状态
     set(accountAtom, initialState);
-    
+
     // 获取当前聊天状态
     const chatState = get(chatAtom);
-    
+
     // 如果有心跳，停止心跳
     if (chatState.heartbeatId) {
       clearInterval(chatState.heartbeatId);
     }
-    
+
     // 重置聊天连接状态
     set(chatAtom, {
       ...chatState,
@@ -200,4 +215,4 @@ export const logout = atom(
       did: undefined // 确保did被清除
     });
   }
-); 
+);

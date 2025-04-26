@@ -246,7 +246,17 @@ const ModelDetail: React.FC<ModelDetailProps> = ({ modelId }) => {
                     height: `${imagePositions[index].height}rem`
                   }}
                 >
-                  <ImageCard image={image} />
+                  <ImageCard 
+                    image={image}
+                    modelOwnerDid={currentModel.creator}
+                    onVisibilityChange={(updatedImage) => {
+                      // 更新本地图片数据
+                      const updatedImages = [...images];
+                      updatedImages[index] = updatedImage;
+                      // React将会响应这些变化
+                      imageListState.images = updatedImages;
+                    }}
+                  />
                 </div>
               );
             })}

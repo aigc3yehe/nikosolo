@@ -99,7 +99,8 @@
   opacity: 0;
   transition: opacity 0.3s ease;
   display: flex;
-  align-items: flex-end;
+  align-items: flex-start;
+  flex-direction: column;
   padding: 0.875rem 0.625rem; /* 14px 10px */
   box-sizing: border-box;
   border-radius: 0.5rem; /* 8px */
@@ -115,6 +116,7 @@
   display: flex;
   align-items: center;
   gap: 0.625rem; /* 10px */
+  margin-top: auto;
 }
 
 .creatorAvatar {
@@ -153,4 +155,77 @@
   letter-spacing: 0;
   vertical-align: middle;
   color: #6E788A;
-} 
+}
+
+.imagePublicStatus {
+  height: 1.75rem; /* 28px */
+  position: absolute;
+  top: 0.625rem; /* 10px */
+  right: 0.625rem;
+  display: flex;
+  z-index: 5;
+}
+
+.imagePublic {
+  width: 1.75rem; /* 28px */
+  height: 1.75rem; /* 28px */
+  cursor: pointer;
+}
+
+/* 当处理中时显示遮罩层 */
+.showOverlay {
+  opacity: 1 !important;
+}
+
+/* 处理指示器样式 */
+.processingIndicator {
+  width: 1.75rem; /* 28px */
+  height: 1.75rem; /* 28px */
+}
+
+/* 加载指示器样式 */
+.typingIndicator {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  border-radius: 4px;
+  padding: 0.25rem;
+}
+
+.typingIndicator span {
+  display: inline-block;
+  width: 0.25rem;
+  height: 0.25rem;
+  border-radius: 50%;
+  background-color: #fff;
+  opacity: 0.6;
+  animation: typingAnimation 1.2s infinite ease-in-out;
+}
+
+/* 为三个小圆点设置不同的颜色 */
+.typingIndicator span:nth-child(1) {
+  background-color: #C7FF8C; /* 绿色 */
+}
+
+.typingIndicator span:nth-child(2) {
+  background-color: #E8C4EA; /* 粉色 */
+  animation-delay: 0.15s;
+}
+
+.typingIndicator span:nth-child(3) {
+  background-color: #39EDFF; /* 蓝色 */
+  animation-delay: 0.3s;
+}
+
+@keyframes typingAnimation {
+  0%, 60%, 100% {
+    transform: translateY(0);
+  }
+  30% {
+    transform: translateY(-2px);
+  }
+}

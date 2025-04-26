@@ -244,6 +244,11 @@ const SwapWidgetCustom = ({ token }: Props) => {
       return;
     }
 
+    if (requiredAmount == 0n) {
+      alert(`Invalid amount`);
+      return;
+    }
+
     try {
       if (authenticated && ready) {
         setTxLoading(true);
@@ -338,6 +343,7 @@ const SwapWidgetCustom = ({ token }: Props) => {
       login();
     } catch (error) {
       console.error("Failed to swap:", error);
+      setLoading(false);
       setTxLoading(false);
     }
   };
@@ -354,6 +360,7 @@ const SwapWidgetCustom = ({ token }: Props) => {
       if (loading) return "Calculating...";
       if (txLoading) return "Swapping...";
       if (isInsufficient) return `Insufficient ${assetName}`;
+      if (requiredAmount == 0n) return "Invalid amount";
       return "Swap";
     }
     return "Login";
@@ -494,9 +501,13 @@ const SwapWidgetCustom = ({ token }: Props) => {
 
       {/* Swap Button */}
       <button
-        disabled={loading || txLoading || isInsufficient}
+        disabled={
+          loading || txLoading || isInsufficient || requiredAmount == 0n
+        }
         className={`w-full py-2 mt-6 rounded-lg hover:brightness-125 ${
-          loading || txLoading || isInsufficient ? "grayscale" : ""
+          loading || txLoading || isInsufficient || requiredAmount == 0n
+            ? "grayscale"
+            : ""
         } bg-[#6366F1] text-white`}
         onClick={handleSwap}
       >

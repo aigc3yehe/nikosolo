@@ -10,7 +10,7 @@ import { clearModelDetail, modelDetailAtom, modelIdAndNameAtom } from '../store/
 const ContentDisplay: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'models' | 'images'>('models');
   const [ownedOnly, setOwnedOnly] = useState(false);
-  const [sortOption, setSortOption] = useState<'New Model' | 'Popular'>('New Model');
+  const [sortOption, setSortOption] = useState<'New Model' | 'Popular'>('Popular');
   const [viewingModelId, setViewingModelId] = useState<number | null>(null);
   const [viewingModelName, setViewingModelName] = useState<string | null>(null);
   const [modelDetailState] = useAtom(modelDetailAtom);
@@ -21,19 +21,19 @@ const ContentDisplay: React.FC = () => {
   const handleViewModelDetail = (modelId: number, modelName: string) => {
     setViewingModelId(modelId);
     setViewingModelName(modelName);
-    
+
     // 更新URL，不刷新页面
     const url = new URL(window.location.href);
     url.searchParams.set('model_id', modelId.toString());
     url.searchParams.set('model_name', modelName);
     window.history.pushState({}, '', url);
   };
-  
+
   // 处理返回到模型列表
   const handleBackToList = () => {
     setViewingModelId(null);
     clearDetail();
-    
+
     // 清除URL参数
     const url = new URL(window.location.href);
     url.searchParams.delete('model_id');
@@ -46,7 +46,7 @@ const ContentDisplay: React.FC = () => {
     const searchParams = new URLSearchParams(window.location.search);
     const modelId = searchParams.get('model_id');
     const modelName = searchParams.get('model_name');
-    
+
     if (modelId && modelName) {
       handleViewModelDetail(parseInt(modelId), modelName);
     }
@@ -57,13 +57,13 @@ const ContentDisplay: React.FC = () => {
       handleViewModelDetail(modelIdAndName.modelId, modelIdAndName.modelName);
     }
   }, [modelIdAndName]);
-  
+
   return (
     <div className={styles.contentDisplay}>
       <div className={styles.contentContainer}>
         {viewingModelId ? (
           <>
-            <ContentHeader 
+            <ContentHeader
               activeTab={activeTab}
               setActiveTab={setActiveTab}
               ownedOnly={ownedOnly}
@@ -74,26 +74,26 @@ const ContentDisplay: React.FC = () => {
               modelName={modelDetailState.currentModel?.name || viewingModelName || 'Loading...'}
               onBackClick={handleBackToList}
             />
-            
+
             <div className={styles.contentBody}>
               <ModelDetail modelId={viewingModelId} />
             </div>
           </>
         ) : (
           <>
-            <ContentHeader 
-              activeTab={activeTab} 
+            <ContentHeader
+              activeTab={activeTab}
               setActiveTab={setActiveTab}
               ownedOnly={ownedOnly}
               setOwnedOnly={setOwnedOnly}
               sortOption={sortOption}
               setSortOption={setSortOption}
             />
-            
+
             <div className={styles.contentBody}>
               {activeTab === 'models' ? (
-                <ModelsContent 
-                  ownedOnly={ownedOnly} 
+                <ModelsContent
+                  ownedOnly={ownedOnly}
                   sortOption={sortOption}
                   onModelClick={handleViewModelDetail}
                 />

@@ -6,6 +6,11 @@ export interface CreateUserResponse {
   data: boolean;
 }
 
+export interface UserPermission {
+  create_model?: boolean; // 是否有创建模型的权限
+  train_model?: boolean; // 是否有训练模型的权限
+}
+
 // 查询用户响应接口
 export interface QueryUserResponse {
   message: string;
@@ -14,6 +19,10 @@ export interface QueryUserResponse {
     did: string;
     twitter: Twitter;
     credit: number; // 查询时可用的credit点
+    name?: string;
+    avatar?: string;
+    permission?: UserPermission;
+    role?: string;  // 'user' or 'adimn'
   };
 }
 
