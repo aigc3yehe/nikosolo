@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useAtom } from "jotai";
+import { useAtom, useSetAtom } from "jotai";
 import { walletClientAtom } from "../store/providerStore";
 import { TokenInfo } from "@uniswap/widgets";
 import EthIcon from "../assets/eth.svg";
@@ -15,7 +15,7 @@ import { usePrivy, useWallets } from "@privy-io/react-auth";
 import { createWalletClient, custom, formatEther, Hex, parseEther } from "viem";
 import { formattedBalance, getAmountWithSlippage } from "../utils/format";
 import { getEthBalance, getTokenBalance } from "../store/alchemyStore";
-
+import { showToastAtom } from "../store/imagesStore.ts";
 interface Props {
   token: TokenInfo;
 }
@@ -39,6 +39,7 @@ const SwapWidgetCustom = ({ token }: Props) => {
   const [, fetchEthBalance] = useAtom(getEthBalance);
   const [, fetchTokenBalance] = useAtom(getTokenBalance);
   const [txLoading, setTxLoading] = useState(false);
+  const showToast = useSetAtom(showToastAtom);
 
   const flaunchWrite = useMemo(() => {
     if (walletClient) {
@@ -240,12 +241,18 @@ const SwapWidgetCustom = ({ token }: Props) => {
     const assetName = isBuy ? "ETH" : token.symbol;
 
     if (currentBalance < requiredAmount) {
-      alert(`Insufficient ${assetName} balance`);
+      showToast({
+        message: `${assetName} balance is insufficient.`,
+        severity: "error",
+      });
       return;
     }
 
     if (requiredAmount == 0n) {
-      alert(`Invalid amount`);
+      showToast({
+        message: "Invalid amount.",
+        severity: "error",
+      });
       return;
     }
 
@@ -264,7 +271,10 @@ const SwapWidgetCustom = ({ token }: Props) => {
               hash,
             });
             console.log("Transaction receipt:", receipt);
-            alert(`Transaction successful: ${receipt?.transactionHash}`);
+            showToast({
+              message: `Transaction successful: ${receipt?.transactionHash}`,
+              severity: "success",
+            });
             setTxLoading(false);
             await fetchBalances(); // 交易成功后刷新余额
             clearInputState();
@@ -282,7 +292,10 @@ const SwapWidgetCustom = ({ token }: Props) => {
               hash,
             });
             console.log("Transaction receipt:", receipt);
-            alert(`Transaction successful: ${receipt?.transactionHash}`);
+            showToast({
+              message: `Transaction successful: ${receipt?.transactionHash}`,
+              severity: "success",
+            });
             setTxLoading(false);
             await fetchBalances(); // 交易成功后刷新余额
             clearInputState();
@@ -315,7 +328,10 @@ const SwapWidgetCustom = ({ token }: Props) => {
                   hash,
                 });
                 console.log("Transaction receipt:", receipt);
-                alert(`Transaction successful: ${receipt?.transactionHash}`);
+                showToast({
+                  message: `Transaction successful: ${receipt?.transactionHash}`,
+                  severity: "success",
+                });
                 setTxLoading(false);
                 await fetchBalances(); // 交易成功后刷新余额
                 clearInputState();
@@ -332,7 +348,10 @@ const SwapWidgetCustom = ({ token }: Props) => {
                 hash,
               });
               console.log("Transaction receipt:", receipt);
-              alert(`Transaction successful: ${receipt?.transactionHash}`);
+              showToast({
+                message: `Transaction successful: ${receipt?.transactionHash}`,
+                severity: "success",
+              });
               setTxLoading(false);
               await fetchBalances(); // 交易成功后刷新余额
               clearInputState();
