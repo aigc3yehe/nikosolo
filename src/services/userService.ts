@@ -1,4 +1,6 @@
 import { Twitter } from "../store/imageStore";
+import { getAccessToken } from "@privy-io/react-auth";
+import { PRIVY_TOKEN_HEADER } from "../utils/constants";
 
 // 创建用户响应接口
 export interface CreateUserResponse {
@@ -22,7 +24,7 @@ export interface QueryUserResponse {
     name?: string;
     avatar?: string;
     permission?: UserPermission;
-    role?: string;  // 'user' or 'adimn'
+    role?: string; // 'user' or 'adimn'
   };
 }
 
@@ -39,11 +41,13 @@ export const createUser = async (userData: {
     throw new Error("Create user failed, missing did or address");
   }
   try {
+    const privyToken = await getAccessToken();
     const response = await fetch("/studio-api/users/create", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${import.meta.env.VITE_BEARER_TOKEN}`,
+        [PRIVY_TOKEN_HEADER]: privyToken || "",
       },
       body: JSON.stringify(userData),
     });

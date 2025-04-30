@@ -1,0 +1,1 @@
+export const PRIVY_TOKEN_HEADER = 'privy-token'

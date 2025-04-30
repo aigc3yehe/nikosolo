@@ -1,6 +1,8 @@
 import { atom } from 'jotai';
 import { accountAtom } from './accountStore';
 import { Twitter } from './imageStore'; // 导入Twitter接口
+import { PRIVY_TOKEN_HEADER } from '../utils/constants';
+import { getAccessToken } from '@privy-io/react-auth';
 
 export interface TokenMetadata {
   description?: string;
@@ -156,11 +158,13 @@ export async function toggleViewRequest(type: string, id: number, view_value: bo
   const API_URL = "/studio-api/model/toggle_view";
 
   try {
+    const privyToken = await getAccessToken();
     const res = await fetch(API_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${import.meta.env.VITE_BEARER_TOKEN}`
+        'Authorization': `Bearer ${import.meta.env.VITE_BEARER_TOKEN}`,
+        [PRIVY_TOKEN_HEADER]: privyToken || "",
       },
       body: JSON.stringify({
         type,

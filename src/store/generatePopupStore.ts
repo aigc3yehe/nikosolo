@@ -1,8 +1,11 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { atom } from 'jotai';
 import { aspectRatios, AspectRatio, CheckStatsResponse } from './chatStore'
 import { ModelDetail } from './modelStore';
 import { fetchImages } from './imageStore';
 import { showToastAtom } from './imagesStore';
+import { PRIVY_TOKEN_HEADER } from '../utils/constants';
+import { getAccessToken } from "@privy-io/react-auth"
 
 interface GeneratePopupState {
   open: boolean;
@@ -234,12 +237,14 @@ export async function generateRequest(prompt: string, creator?: string,
   const API_URL = '/studio-api/model/aigc';
   
   try {
+    const privyToken = await getAccessToken();
     const full_prompt = ` ${lora_name}, <lora:${lora_name}:${lora_weight}>, ${prompt},`
     const response = await fetch(API_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${import.meta.env.VITE_BEARER_TOKEN}`
+        'Authorization': `Bearer ${import.meta.env.VITE_BEARER_TOKEN}`,
+        [PRIVY_TOKEN_HEADER]: privyToken || "",
       },
       body: JSON.stringify({
         model_id,

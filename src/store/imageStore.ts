@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 import { atom } from 'jotai';
 import { accountAtom } from './accountStore';
 

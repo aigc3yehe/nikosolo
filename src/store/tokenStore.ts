@@ -1,4 +1,6 @@
 import { atom } from 'jotai';
+import { PRIVY_TOKEN_HEADER } from '../utils/constants';
+import { getAccessToken } from '@privy-io/react-auth';
 
 // 定义响应类型
 export type ModelTokenizationStateResponse = {
@@ -115,10 +117,9 @@ export const fetchTokenizationState = atom(
         model_id: modelId.toString(),
         refreshState: refreshState.toString()
       });
-      
       const response = await fetch(`/studio-api/model/tokenization/state?${params.toString()}`, {
         headers: {
-          'Authorization': `Bearer ${import.meta.env.VITE_BEARER_TOKEN}`
+          'Authorization': `Bearer ${import.meta.env.VITE_BEARER_TOKEN}`,
         }
       });
       
@@ -193,11 +194,13 @@ export const tokenizeModel = atom(
   null,
   async (_, set, { modelId, metadata, config }: { modelId: number, metadata: Metadata, config: TokenizationConfig }) => {
     try {
+      const privyToken = await getAccessToken();
       const response = await fetch('/studio-api/model/tokenization', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${import.meta.env.VITE_BEARER_TOKEN}`
+          'Authorization': `Bearer ${import.meta.env.VITE_BEARER_TOKEN}`,
+          [PRIVY_TOKEN_HEADER]: privyToken || '',
         },
         body: JSON.stringify({
           model_id: modelId,
@@ -228,11 +231,13 @@ export const retryTokenization = atom(
   null,
   async (_, set, { modelId, creator }: { modelId: number, creator: string }) => {
     try {
+      const privyToken = await getAccessToken();
       const response = await fetch('/studio-api/model/tokenization/retry', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${import.meta.env.VITE_BEARER_TOKEN}`
+          'Authorization': `Bearer ${import.meta.env.VITE_BEARER_TOKEN}`,
+          [PRIVY_TOKEN_HEADER]: privyToken || '',
         },
         body: JSON.stringify({
           model_id: modelId,
@@ -270,11 +275,13 @@ export const setModelFlag = atom(
   null,
   async (_, __, { modelId, flag, user }: { modelId: number, flag: string, user: string }) => {
     try {
+      const privyToken = await getAccessToken();
       const response = await fetch('/studio-api/model/flag', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${import.meta.env.VITE_BEARER_TOKEN}`
+          'Authorization': `Bearer ${import.meta.env.VITE_BEARER_TOKEN}`,
+          [PRIVY_TOKEN_HEADER]: privyToken || '',
         },
         body: JSON.stringify({
           model_id: modelId,
