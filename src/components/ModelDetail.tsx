@@ -110,7 +110,10 @@ const ModelDetail: React.FC<ModelDetailProps> = ({ modelId }) => {
 
   useEffect(() => {
     // 修改 renderTokenizationStatus 函数中的完成状态部分
-    if (data) {
+
+    const hasCommunityTokens = (currentModel?.model_community_tokenization?.length || 0) > 0;
+
+    if (data || hasCommunityTokens) {
       setShowBuyToken(true);
       setActiveTab('tokenization')
     } else{
@@ -122,7 +125,7 @@ const ModelDetail: React.FC<ModelDetailProps> = ({ modelId }) => {
       setActiveTab('description');
       setShowBuyToken(false);
     };
-  }, [data, setShowBuyToken, setActiveTab]);
+  }, [data, setShowBuyToken, setActiveTab, currentModel?.model_community_tokenization?.length]);
 
   // 监听当前模型变化，更新聊天存储中的当前模型(模型Ready的时候才更新)
   useEffect(() => {
@@ -198,7 +201,7 @@ const ModelDetail: React.FC<ModelDetailProps> = ({ modelId }) => {
   useEffect(() => {
     const scrollContainer = scrollContainerRef.current;
     if (!scrollContainer || imagesLoading || !hasMore) return;
-    
+
     const handleScroll = () => {
       const { scrollTop, scrollHeight, clientHeight } = scrollContainer;
       // 当滚动到距离底部200px时加载更多
@@ -206,7 +209,7 @@ const ModelDetail: React.FC<ModelDetailProps> = ({ modelId }) => {
         fetchImagesList({ reset: false, model_id: modelId, view: viewParam });
       }
     };
-    
+
     scrollContainer.addEventListener('scroll', handleScroll);
     return () => scrollContainer.removeEventListener('scroll', handleScroll);
   }, [hasMore, imagesLoading, fetchImagesList, modelId, viewParam]);
@@ -329,6 +332,7 @@ const ModelDetail: React.FC<ModelDetailProps> = ({ modelId }) => {
                       // React将会响应这些变化
                       imageListState.images = updatedImages;
                     }}
+                    showEditCover={true}
                   />
                 </div>
               );
@@ -338,11 +342,11 @@ const ModelDetail: React.FC<ModelDetailProps> = ({ modelId }) => {
 
         {/* 修改loadMoreTrigger的样式和位置 */}
         {hasMore && (
-          <div 
-            ref={loadMoreTriggerRef} 
+          <div
+            ref={loadMoreTriggerRef}
             className={styles.loadMoreTrigger}
-            style={{ 
-              height: '30px', 
+            style={{
+              height: '30px',
               width: '100%',
               margin: '10px 0',
               opacity: 0,  // 设置为不可见但仍可检测

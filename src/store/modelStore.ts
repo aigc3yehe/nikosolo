@@ -18,6 +18,14 @@ export interface ModelToken {
   deployer?: string;
 }
 
+export interface CommunityModelToken {
+  id?: number;
+  state?: number;
+  metadata?: TokenMetadata;
+  meme_token?: string;
+  network?: number;
+}
+
 // 定义Model接口
 export interface Model {
   name: string;
@@ -31,6 +39,7 @@ export interface Model {
   flag: string | null;
   public?: number; // 1 为可视, 0为由所有者设置为不可视，-1则是系统管理员设置的不可见，级别最高
   model_tokenization: ModelToken | null;
+  model_community_tokenization: CommunityModelToken[] | null;
   model_tran: {
     version: number;
     train_state: number; // 0: 未开始, 1: 训练中, 2: 训练完成，-1: 训练失败
@@ -271,7 +280,7 @@ export const fetchModelDetail = atom(
       });
 
       if (!response.ok) {
-        throw new Error('获取模型详情失败');
+        throw new Error('get error detail error');
       }
 
       const result = await response.json();
@@ -328,4 +337,62 @@ export const setModelIdAndName = atom(
 
 export const getModelIdAndName = atom(
   (get) => get(modelIdAndNameAtom)
+);
+
+export async function editCoverRequest(model_id: number, url: string, did?: string) {
+  const API_URL = "/studio-api/model/edit_cover";
+
+  try {
+    const privyToken = await getAccessToken();
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${import.meta.env.VITE_BEARER_TOKEN}`,
+        [PRIVY_TOKEN_HEADER]: privyToken || "",
+      },
+      body: JSON.stringify({
+        model_id,
+        url,
+        user: did,
+      })
+    })
+
+    if (!res.ok) {
+      throw new Error(`API returned error status ${res.status}`);
+    }
+
+    return await res.json();
+  } catch (error) {
+    console.log(error);
+    throw error;
+  }
+}
+
+// 获取模型列表
+export const fetchEditCover = atom(
+    null,
+    async (get, set, model_id: number, url: string) => {
+      const accountState = get(accountAtom);
+
+      try {
+        const did = accountState.did || undefined;
+        const response = await editCoverRequest(model_id, url, did);
+        console.log('result', response);
+        const result = await response.json()
+        console.log("result", result);
+        if (result.data) {
+          console.log('result 设置成功', result);
+          const oldModelDetail = get(modelDetailAtom)
+          if (oldModelDetail && oldModelDetail.currentModel) {
+            oldModelDetail.currentModel.cover = url
+            set(modelDetailAtom, oldModelDetail);
+          }
+        }
+        return response; // 返回结果，以便在组件中使用Promise链
+      } catch (error) {
+        console.log(error);
+        throw error; // 抛出错误以便在组件中捕获
+      }
+    }
 );

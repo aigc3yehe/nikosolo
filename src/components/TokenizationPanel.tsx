@@ -10,6 +10,8 @@ import {
 } from '../store/tokenStore';
 import StatePrompt from './StatePrompt';
 import copySvg from '../assets/copy_address.svg';
+import infoSvg from '../assets/info.svg';
+import linkSvg from '../assets/link.svg';
 import {accountAtom} from "../store/accountStore.ts";
 import {ModelDetail} from '../store/modelStore';
 import {showToastAtom} from "../store/imagesStore.ts";
@@ -32,7 +34,7 @@ const TokenizationPanel: React.FC<TokenizationPanelProps> = memo(({
   const setTokenizationFlag = useSetAtom(setModelFlag);
 
   const setModelStatusInChat = useSetAtom(setModelStatus);
-
+  const [onlyCommunityTokens, setOnlyCommunityTokens] = useState<boolean>(false);
   const [isInitiating, setIsInitiating] = useState(false);
   const { user } = usePrivy();
 
@@ -50,6 +52,9 @@ const TokenizationPanel: React.FC<TokenizationPanelProps> = memo(({
   };
 
   const status = getTrainingStatus();
+
+  const community_tokens = model.model_community_tokenization;
+  const has_community_tokens = community_tokens && community_tokens.length > 0;
 
   // 获取Twitter显示名称
   const getDisplayName = () => {
@@ -78,6 +83,16 @@ const TokenizationPanel: React.FC<TokenizationPanelProps> = memo(({
       }
 
   }, [tokenizationState, setModelStatusInChat, status.isReady, isFlag]);
+
+  // 判断是否只显示 community tokens
+  useEffect(() => {
+     const data = tokenizationState.data;
+     if (!data) {
+         setOnlyCommunityTokens((model.model_community_tokenization?.length || 0) > 0);
+     } else {
+         setOnlyCommunityTokens(false);
+     }
+  }, [tokenizationState, model.model_community_tokenization]);
 
   const formatAddress = (address: string) => {
     if (!address) return '';
@@ -109,6 +124,37 @@ const TokenizationPanel: React.FC<TokenizationPanelProps> = memo(({
     } finally {
       setIsInitiating(false);
     }
+  };
+
+  // 渲染community tokens
+  const renderCommunityTokens = () => {
+    return <div className="w-full pt-3.5 pb-3.5 pl-7 pr-7 flex flex-wrap items-center gap-5 rounded border border-[#3741514D]
+                bg-gradient-to-r from-[rgba(31, 41, 55, 0.2)] to-[rgba(63, 79, 103, 0.2)] backdrop-blur-[1.25rem]">
+            <div className="flex gap-1.5 items-center justify-center">
+                <img
+                    src={infoSvg}
+                    alt="info"
+                    className="w-4 h-4"
+                />
+                <span className="font-jura font-medium text-sm leading-none tracking-normal align-middle capitalize text-white">
+                   Community token
+                </span>
+            </div>
+
+            {community_tokens?.map((token) => {
+                return (
+                    <div className="flex gap-1 items-center justify-center cursor-pointer" onClick={() => {}}>
+                        <span className="font-jura font-normal text-sm leading-none tracking-normal align-middle capitalize text-[#6366F1]">
+                            ${token.metadata?.name}
+                        </span>
+                        <img
+                            src={linkSvg}
+                            alt="link"
+                            className="w-3.5 h-3.5"/>
+                    </div>
+                )
+            })}
+        </div>
   };
 
   // 渲染 token 化状态
@@ -318,6 +364,7 @@ const TokenizationPanel: React.FC<TokenizationPanelProps> = memo(({
                     </div>
                 </div>
             </div>
+            {has_community_tokens && renderCommunityTokens()}
           </div>
         );
       }
@@ -366,6 +413,14 @@ const TokenizationPanel: React.FC<TokenizationPanelProps> = memo(({
       </div>
     );
   };
+
+  if (onlyCommunityTokens) {
+      return (
+          <div className="w-full flex items-center justify-center">
+              {renderCommunityTokens()}
+          </div>
+      )
+  }
 
   return (
     <div className={styles.tokenizationPanel}>
