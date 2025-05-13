@@ -18,6 +18,7 @@ import {showToastAtom} from "../store/imagesStore.ts";
 import SwapWidgetCustom from './SwapWidgetCustom.tsx';
 import { usePrivy } from '@privy-io/react-auth';
 import {setModelStatus} from "../store/chatStore.ts";
+import {Link} from "react-router-dom";
 
 interface TokenizationPanelProps {
   model: ModelDetail;
@@ -143,15 +144,17 @@ const TokenizationPanel: React.FC<TokenizationPanelProps> = memo(({
 
             {community_tokens?.map((token) => {
                 return (
-                    <div className="flex gap-1 items-center justify-center cursor-pointer" onClick={() => {}}>
+                    <Link target="_blank" to={`https://flaunch.gg/base/coin/${token.meme_token}`}>
+                        <div className="flex gap-1 items-center justify-center cursor-pointer" >
                         <span className="font-jura font-normal text-sm leading-none tracking-normal align-middle capitalize text-[#6366F1]">
                             ${token.metadata?.name}
                         </span>
-                        <img
-                            src={linkSvg}
-                            alt="link"
-                            className="w-3.5 h-3.5"/>
-                    </div>
+                            <img
+                                src={linkSvg}
+                                alt="link"
+                                className="w-3.5 h-3.5"/>
+                        </div>
+                    </Link>
                 )
             })}
         </div>
