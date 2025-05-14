@@ -379,7 +379,7 @@ export const fetchEditCover = atom(
         const did = accountState.did || undefined;
         const response = await editCoverRequest(model_id, url, did);
         console.log('result', response);
-        const result = await response.json()
+        const result = response;
         console.log("result", result);
         if (result.data) {
           console.log('result 设置成功', result);
