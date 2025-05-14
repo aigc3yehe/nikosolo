@@ -147,7 +147,7 @@ const TokenizationPanel: React.FC<TokenizationPanelProps> = memo(({
                     <Link target="_blank" to={`https://flaunch.gg/base/coin/${token.meme_token}`}>
                         <div className="flex gap-1 items-center justify-center cursor-pointer" >
                         <span className="font-jura font-normal text-sm leading-none tracking-normal align-middle capitalize text-[#6366F1]">
-                            ${token.metadata?.name}
+                            ${token.metadata?.symbol || token?.metadata?.name}
                         </span>
                             <img
                                 src={linkSvg}
