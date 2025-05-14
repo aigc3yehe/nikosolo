@@ -32,7 +32,7 @@ export default defineConfig({
         rewrite: (path) => path.replace(/^\/beta-api/, '')
       },
       '/studio-api': {
-        target: 'http://170.106.196.194:5576',
+        target: 'https://api.nyko.cool',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/studio-api/, '')
       }
