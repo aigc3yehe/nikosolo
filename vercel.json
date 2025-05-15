@@ -10,7 +10,7 @@
     },
     {
       "source": "/studio-api/:path*",
-      "destination": "http://170.106.196.194:5576/:path*"
+      "destination": "https://api.nyko.cool/:path*"
     },
     {
       "source": "/:path*",
