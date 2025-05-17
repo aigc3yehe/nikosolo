@@ -217,6 +217,12 @@
   background-color: #E7692C;
 }
 
+.virtualsButton {
+  width: 2.25rem; /* 36px */
+  height: 2.25rem; /* 36px */
+  background-color: #F1FFD5;
+}
+
 .modelName {
   font-family: 'Jura', sans-serif;
   font-weight: 700;

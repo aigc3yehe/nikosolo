@@ -13,7 +13,7 @@ import copySvg from '../assets/copy_address.svg';
 import infoSvg from '../assets/info.svg';
 import linkSvg from '../assets/link.svg';
 import {accountAtom} from "../store/accountStore.ts";
-import {ModelDetail} from '../store/modelStore';
+import {ModelDetail, TOKENIZATION_LAUNCHPAD_TYPE} from '../store/modelStore';
 import {showToastAtom} from "../store/imagesStore.ts";
 import SwapWidgetCustom from './SwapWidgetCustom.tsx';
 import { usePrivy } from '@privy-io/react-auth';
@@ -89,12 +89,12 @@ const TokenizationPanel: React.FC<TokenizationPanelProps> = memo(({
   // 判断是否只显示 community tokens
   useEffect(() => {
      const data = tokenizationState.data;
-     if (!data) {
+     if (!data || model.model_tokenization?.launchpad == TOKENIZATION_LAUNCHPAD_TYPE.VIRTUALS) {
          setOnlyCommunityTokens((model.model_community_tokenization?.length || 0) > 0);
      } else {
          setOnlyCommunityTokens(false);
      }
-  }, [tokenizationState, model.model_community_tokenization]);
+  }, [tokenizationState, model.model_community_tokenization, model.model_tokenization?.launchpad]);
 
   const formatAddress = (address: string) => {
     if (!address) return '';

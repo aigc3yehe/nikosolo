@@ -1,26 +1,27 @@
-import React from 'react';
-import { useAtom, useSetAtom } from 'jotai';
-import { accountAtom } from '../store/accountStore';
-import { showGeneratePopupAtom } from '../store/generatePopupStore';
-import styles from './ModelInfoPanel.module.css';
-import avatarSvg from '../assets/Avatar.svg';
-import twitterSvg from '../assets/twitter.svg';
-import createSvg from '../assets/create.svg';
-import shareSvg from '../assets/share.svg';
-import coinsSvg from '../assets/coins.svg';
-import dexSvg from '../assets/dex.svg';
-import flaunchIcon from '../assets/flaunch.png';
-import codeSvg from '../assets/code.svg';
-import { ModelDetail } from '../store/modelStore';
+import React from "react";
+import { useAtom, useSetAtom } from "jotai";
+import { accountAtom } from "../store/accountStore";
+import { showGeneratePopupAtom } from "../store/generatePopupStore";
+import styles from "./ModelInfoPanel.module.css";
+import avatarSvg from "../assets/Avatar.svg";
+import twitterSvg from "../assets/twitter.svg";
+import createSvg from "../assets/create.svg";
+import shareSvg from "../assets/share.svg";
+import coinsSvg from "../assets/coins.svg";
+import dexSvg from "../assets/dex.svg";
+import virtualsIcon from "../assets/virtuals.svg";
+import flaunchIcon from "../assets/flaunch.png";
+import codeSvg from "../assets/code.svg";
+import { ModelDetail, TOKENIZATION_LAUNCHPAD_TYPE } from "../store/modelStore";
 import {
   fetchTokenizationState,
   setModelFlag,
   tokenizationStateAtom,
-  FlaunchStatusResponse
-} from '../store/tokenStore';
-import { usePrivy } from '@privy-io/react-auth';
-import { Link } from 'react-router-dom';
-import { GENERATE_IMAGE_SERVICE_CONFIG } from '../utils/plan';
+  FlaunchStatusResponse,
+} from "../store/tokenStore";
+import { usePrivy } from "@privy-io/react-auth";
+import { Link } from "react-router-dom";
+import { GENERATE_IMAGE_SERVICE_CONFIG } from "../utils/plan";
 
 interface ModelInfoPanelProps {
   model: ModelDetail;
@@ -36,7 +37,7 @@ const ModelInfoPanel: React.FC<ModelInfoPanelProps> = ({ model }) => {
   const { user } = usePrivy();
 
   // 检查当前用户是否是模型创建者
-  const isFlag = model.flag !== null && model.flag !== ""
+  const isFlag = model.flag !== null && model.flag !== "";
   const isShowToken = accountState.did === model.creator && !isFlag;
 
   // 获取Twitter显示名称
@@ -47,7 +48,11 @@ const ModelInfoPanel: React.FC<ModelInfoPanelProps> = ({ model }) => {
       return model.users.twitter.username;
     } else {
       // 如果没有Twitter信息，显示缩略的钱包地址
-      return model.creator.substring(0, 6) + '...' + model.creator.substring(model.creator.length - 4);
+      return (
+        model.creator.substring(0, 6) +
+        "..." +
+        model.creator.substring(model.creator.length - 4)
+      );
     }
   };
 
@@ -66,54 +71,57 @@ const ModelInfoPanel: React.FC<ModelInfoPanelProps> = ({ model }) => {
   // 格式化时间
   const formatCreationTime = (dateStr: string) => {
     const date = new Date(dateStr);
-    return date.toLocaleDateString(undefined, {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit'
-    }).replace(/\//g, '.');
+    return date
+      .toLocaleDateString(undefined, {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+      })
+      .replace(/\//g, ".");
   };
 
   // 获取LoraName
   const getLoraName = () => {
-    return model.model_tran?.[0]?.lora_name || 'Unknown';
+    return model.model_tran?.[0]?.lora_name || "Unknown";
   };
 
   // 获取训练状态
   const getTrainingStatus = () => {
     const trainState = model.model_tran?.[0]?.train_state;
     if (trainState === 2) {
-      return { text: 'Ready', className: styles.statusReady, isReady: true };
+      return { text: "Ready", className: styles.statusReady, isReady: true };
     } else {
       // 计算训练已经进行的时间（小时）
       const submittedTime = new Date(model.created_at);
       const currentTime = new Date();
-      const elapsedHours = (currentTime.getTime() - submittedTime.getTime()) / (1000 * 60 * 60);
+      const elapsedHours =
+        (currentTime.getTime() - submittedTime.getTime()) / (1000 * 60 * 60);
 
       // 根据已用时间确定训练阶段
-      let statusText = '';
+      let statusText = "";
       if (elapsedHours <= 0.5) {
-        statusText = 'Processing training materials';
+        statusText = "Processing training materials";
       } else if (elapsedHours <= 1) {
-        statusText = 'Generating parameter tags';
+        statusText = "Generating parameter tags";
       } else {
-        statusText = 'Training in progress';
+        statusText = "Training in progress";
       }
 
       // 计算预估剩余时间
       const totalTrainingHours = 5; // 总训练时间为5小时
       const remainingHours = totalTrainingHours - elapsedHours;
-      let etaText = '';
+      let etaText = "";
 
       if (remainingHours <= 0) {
-        etaText = '(finishing)';
+        etaText = "(finishing)";
       } else {
         // 使用4舍5入来显示小时数
         const roundedHours = Math.round(remainingHours);
 
         if (roundedHours === 0) {
-          etaText = '(finishing)';
+          etaText = "(finishing)";
         } else {
-          etaText = `(ETA ${roundedHours} hour${roundedHours > 1 ? 's' : ''})`;
+          etaText = `(ETA ${roundedHours} hour${roundedHours > 1 ? "s" : ""})`;
         }
       }
 
@@ -121,7 +129,7 @@ const ModelInfoPanel: React.FC<ModelInfoPanelProps> = ({ model }) => {
         text: statusText,
         eta: etaText,
         className: styles.statusTrain,
-        isReady: false
+        isReady: false,
       };
     }
   };
@@ -141,26 +149,24 @@ const ModelInfoPanel: React.FC<ModelInfoPanelProps> = ({ model }) => {
     // 确保分享链接是模型详情页的基础链接，不包含其他可能存在的查询参数，然后添加模型ID和名称
     const baseUrl = `${modelLinkUrl.protocol}//${modelLinkUrl.host}${modelLinkUrl.pathname}`;
     const shareUrl = new URL(baseUrl);
-    shareUrl.searchParams.set('model_id', model.id.toString());
-    shareUrl.searchParams.set('model_name', model.name);
+    shareUrl.searchParams.set("model_id", model.id.toString());
+    shareUrl.searchParams.set("model_name", model.name);
     const modelLink = shareUrl.toString();
 
-
-
     // 修改 renderTokenizationStatus 函数中的完成状态部分
-    let symbol = ""
-    if (data && 'success' in data && 'state' in data) {
+    let symbol = "";
+    if (data && "success" in data && "state" in data) {
       // 如果是 FlaunchStatusResponse
       const statusData = data as FlaunchStatusResponse;
-      if (statusData.state === 'completed' && statusData.collectionToken) {
-        symbol = statusData.collectionToken.symbol
+      if (statusData.state === "completed" && statusData.collectionToken) {
+        symbol = statusData.collectionToken.symbol;
       }
     }
 
     console.log(symbol);
 
     // 2. 根据是否有代币确定分享文本
-    let tweetText = '';
+    let tweetText = "";
     const modelName = model.name;
 
     if (symbol) {
@@ -174,26 +180,29 @@ const ModelInfoPanel: React.FC<ModelInfoPanelProps> = ({ model }) => {
     const twitterUrl = `https://x.com/intent/post?text=${encodedTweetText}`;
 
     // 4. 在新标签页中打开 Twitter 分享链接
-    window.open(twitterUrl, '_blank', 'noopener,noreferrer');
+    window.open(twitterUrl, "_blank", "noopener,noreferrer");
   };
 
   const handleToken = async () => {
     // 发起 token 化请求
-    const flag = 'tokenization'
+    const flag = "tokenization";
     const modelId = model.id;
-    await setTokenizationFlag({ modelId, flag, user: user?.id || '' });
+    await setTokenizationFlag({ modelId, flag, user: user?.id || "" });
 
     // 立即获取最新状态
-    await fetchState({modelId, refreshState: true});
+    await fetchState({ modelId, refreshState: true });
   };
 
   const handleTwitterClick = () => {
-    console.log('Twitter clicked');
+    console.log("Twitter clicked");
     // 实现Twitter点击功能
     if (model.users.twitter?.username) {
-      window.open(`https://twitter.com/${model.users.twitter?.username}`, '_blank');
+      window.open(
+        `https://twitter.com/${model.users.twitter?.username}`,
+        "_blank"
+      );
     } else {
-      console.log('No Twitter username found');
+      console.log("No Twitter username found");
     }
   };
 
@@ -215,7 +224,11 @@ const ModelInfoPanel: React.FC<ModelInfoPanelProps> = ({ model }) => {
 
         {model.users.twitter && (
           <button className={styles.twitterButton} onClick={handleTwitterClick}>
-            <img src={twitterSvg} alt="Twitter" className={styles.twitterIcon} />
+            <img
+              src={twitterSvg}
+              alt="Twitter"
+              className={styles.twitterIcon}
+            />
           </button>
         )}
       </div>
@@ -243,13 +256,17 @@ const ModelInfoPanel: React.FC<ModelInfoPanelProps> = ({ model }) => {
         {/* Published */}
         <div className={styles.detailRow}>
           <span className={styles.detailLabel}>Published</span>
-          <span className={styles.detailValue}>{formatCreationTime(model.created_at)}</span>
+          <span className={styles.detailValue}>
+            {formatCreationTime(model.created_at)}
+          </span>
         </div>
 
         {/* Status */}
         <div className={`${styles.detailRow} ${styles.lastRow}`}>
           <span className={styles.detailLabel}>Status</span>
-          <span className={`${styles.detailValue} ${status.className}`}>{status.text}</span>
+          <span className={`${styles.detailValue} ${status.className}`}>
+            {status.text}
+          </span>
         </div>
       </div>
 
@@ -258,76 +275,90 @@ const ModelInfoPanel: React.FC<ModelInfoPanelProps> = ({ model }) => {
         {status.isReady ? (
           <>
             {/* Ready状态下的生成按钮 */}
-            <button
-              className={styles.generateButton}
-              onClick={handleGenerate}
-            >
-              <img src={createSvg} alt="Generate" className={styles.buttonIcon} />
-              <div className='flex items-end gap-[1px]'>
+            <button className={styles.generateButton} onClick={handleGenerate}>
+              <img
+                src={createSvg}
+                alt="Generate"
+                className={styles.buttonIcon}
+              />
+              <div className="flex items-end gap-[1px]">
                 <span>Generate</span>
-                <span className='!text-xs'>({GENERATE_IMAGE_SERVICE_CONFIG.cu} Credits)</span>
+                <span className="!text-xs">
+                  ({GENERATE_IMAGE_SERVICE_CONFIG.cu} Credits)
+                </span>
               </div>
             </button>
 
             {/* 分享按钮 */}
-            <button
-              className={styles.shareButton}
-              onClick={handleShare}
-            >
+            <button className={styles.shareButton} onClick={handleShare}>
               <img src={shareSvg} alt="Share" className={styles.buttonIcon} />
             </button>
 
             {/* Token按钮 - 仅当用户是模型创建者时显示 */}
             {isShowToken && (
-              <button
-                className={styles.mintButton}
-                onClick={handleToken}
-              >
+              <button className={styles.mintButton} onClick={handleToken}>
                 <img src={coinsSvg} alt="Token" className={styles.buttonIcon} />
               </button>
             )}
 
             {/* Token按钮 - Dexscreener 跳转 */}
-            {
-              model?.model_tokenization?.meme_token && (
-                <Link target="_blank" to={`https://dexscreener.com/base/${model.model_tokenization.meme_token}`}>
-                  <button
-                    className={styles.dexButton}
-                >
-                    <img src={dexSvg} alt="Dexscreener" className={styles.buttonIcon} />
-                  </button>
-                </Link>
-              )
-            }
+            {model?.model_tokenization?.meme_token && (
+              <Link
+                target="_blank"
+                to={`https://dexscreener.com/base/${model.model_tokenization.meme_token}`}
+              >
+                <button className={styles.dexButton}>
+                  <img
+                    src={dexSvg}
+                    alt="Dexscreener"
+                    className={styles.buttonIcon}
+                  />
+                </button>
+              </Link>
+            )}
             {/* Token按钮 - Flaunch 跳转 */}
-            {
-              model?.model_tokenization?.meme_token && (
-                <Link target="_blank" to={`https://flaunch.gg/base/coin/${model.model_tokenization.meme_token}`}>
-                  <button
-                    className={styles.flaunchButton}
+            {model?.model_tokenization?.meme_token && (
+              <Link
+                target="_blank"
+                to={
+                  model?.model_tokenization?.launchpad ==
+                  TOKENIZATION_LAUNCHPAD_TYPE.VIRTUALS
+                    ? `https://app.virtuals.io/virtuals/${model.model_tokenization.metadata?.virtuals_id}`
+                    : `https://flaunch.gg/base/coin/${model.model_tokenization.meme_token}`
+                }
+              >
+                <button
+                  className={
+                    model?.model_tokenization?.launchpad ==
+                    TOKENIZATION_LAUNCHPAD_TYPE.VIRTUALS
+                      ? styles.virtualsButton
+                      : styles.flaunchButton
+                  }
                 >
-                    <img src={flaunchIcon} alt="Flaunch" className={styles.buttonIcon} />
-                  </button>
-                </Link>
-              )
-            }
+                  <img
+                    src={
+                      model?.model_tokenization?.launchpad ==
+                      TOKENIZATION_LAUNCHPAD_TYPE.VIRTUALS
+                        ? virtualsIcon
+                        : flaunchIcon
+                    }
+                    alt="Launchpad"
+                    className={styles.buttonIcon}
+                  />
+                </button>
+              </Link>
+            )}
           </>
         ) : (
           <>
             {/* 训练中状态按钮 */}
-            <button
-              className={styles.trainingButton}
-              disabled
-            >
+            <button className={styles.trainingButton} disabled>
               <img src={codeSvg} alt="Code" className={styles.buttonIcon} />
               <span>Training... {status.eta}</span>
             </button>
 
             {/* 分享按钮 */}
-            <button
-              className={styles.shareButton}
-              onClick={handleShare}
-            >
+            <button className={styles.shareButton} onClick={handleShare}>
               <img src={shareSvg} alt="Share" className={styles.buttonIcon} />
             </button>
           </>

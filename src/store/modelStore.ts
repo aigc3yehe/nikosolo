@@ -5,11 +5,17 @@ import { PRIVY_TOKEN_HEADER } from '../utils/constants';
 import { getAccessToken } from '@privy-io/react-auth';
 import {FlaunchStatusResponse, ModelTokenizationStateResponse} from './tokenStore';
 
+export enum TOKENIZATION_LAUNCHPAD_TYPE {
+  FLAUNCH = 'flaunch',
+  VIRTUALS = 'virtuals',
+}
+
 export interface TokenMetadata {
   description?: string;
   image?: string;
   name?: string;
   symbol?: string;
+  virtuals_id?: number;
 }
 
 export interface ModelToken {
@@ -17,6 +23,7 @@ export interface ModelToken {
   metadata?: TokenMetadata;
   network?: number;
   deployer?: string;
+  launchpad?: TOKENIZATION_LAUNCHPAD_TYPE
 }
 
 export interface CommunityModelToken {

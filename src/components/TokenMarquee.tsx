@@ -1,37 +1,41 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { useAtom } from 'jotai';
-import { fetchTopTokens, tokenMarqueeStateAtom } from '../store/tokenMarqueeStore';
-import { modelIdAndNameAtom } from '../store/modelStore';
-import styles from './TokenMarquee.module.css';
+import React, { useEffect, useRef, useState } from "react";
+import { useAtom } from "jotai";
+import {
+  fetchTopTokens,
+  tokenMarqueeStateAtom,
+} from "../store/tokenMarqueeStore";
+import { modelIdAndNameAtom } from "../store/modelStore";
+import styles from "./TokenMarquee.module.css";
 import BaseChainIcon from "../assets/base.svg";
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from "react-router-dom";
 
 // 格式化价格函数
 const formatPrice = (price: string): string => {
   const numValue = parseFloat(price);
-  
+
   if (numValue >= 1000000) {
     return `${(numValue / 1000000).toFixed(2)}M`;
   } else if (numValue >= 1000) {
     return `${(numValue / 1000).toFixed(2)}K`;
   }
-  
+
   return numValue.toFixed(2);
 };
 
 // 处理IPFS图片URL
 const getImageUrl = (logoURI: string): string => {
+  if (!logoURI) return "";
   if (logoURI.startsWith("ipfs://")) {
     const ipfsHash = logoURI.replace("ipfs://", "");
     return `https://gateway.pinata.cloud/ipfs/${ipfsHash}`;
   }
-  
+
   const isIPFS = logoURI.startsWith("Qm");
   if (isIPFS) {
     return `https://gateway.pinata.cloud/ipfs/${logoURI}`;
   }
-  
-  return `https://ik.imagekit.io/xenoai/niyoko/${logoURI}?tr=w-32,q-90`
+
+  return `https://ik.imagekit.io/xenoai/niyoko/${logoURI}?tr=w-32,q-90`;
 };
 
 const TokenMarquee: React.FC = () => {
@@ -45,25 +49,28 @@ const TokenMarquee: React.FC = () => {
   useEffect(() => {
     // 组件挂载时获取数据
     getTopTokens();
-    
+
     // 每隔60秒刷新一次数据
     const interval = setInterval(() => {
       getTopTokens();
     }, 60000);
-    
+
     return () => clearInterval(interval);
   }, [getTopTokens]);
 
   // 处理点击模型详情
   const handleTokenClick = (modelId: number | string, modelName: string) => {
     // 设置全局模型ID和名称状态
-    setModelIdAndName({ 
-      modelId: typeof modelId === 'string' ? parseInt(modelId as string, 10) : modelId as number, 
-      modelName 
+    setModelIdAndName({
+      modelId:
+        typeof modelId === "string"
+          ? parseInt(modelId as string, 10)
+          : (modelId as number),
+      modelName,
     });
-    
+
     // 导航到首页(确保我们在正确的路由)
-    navigate('/');
+    navigate("/");
   };
 
   // 渲染内容基于状态
@@ -72,19 +79,23 @@ const TokenMarquee: React.FC = () => {
     if (tokenState.isLoading && tokenState.tokens.length === 0) {
       return <div className={styles.loadingContainer}>loading...</div>;
     }
-    
+
     // 有错误且没有数据可显示
     if (tokenState.error && tokenState.tokens.length === 0) {
-      return <div className={styles.errorContainer}>Be right back, stay tuned!</div>;
+      return (
+        <div className={styles.errorContainer}>Be right back, stay tuned!</div>
+      );
     }
-    
+
     // 有数据可显示（无论是否有错误或正在加载）
     return (
-      <div 
-        className={`${styles.tokensContainer} ${isHovered ? styles.paused : ''}`}
+      <div
+        className={`${styles.tokensContainer} ${
+          isHovered ? styles.paused : ""
+        }`}
       >
         {tokenState.tokens.map((token) => (
-          <div 
+          <div
             key={`${token.model_id}-${token.token_symbol}`}
             className={styles.tokenItem}
             onMouseEnter={() => setIsHovered(true)}
@@ -92,13 +103,13 @@ const TokenMarquee: React.FC = () => {
             onClick={() => handleTokenClick(token.model_id, token.model_name)}
           >
             <div className={styles.tokenIconWrapper}>
-              <img 
-                src={getImageUrl(token.token_base_uri)} 
+              <img
+                src={getImageUrl(token.token_base_uri)}
                 alt={token.token_symbol}
-                className={styles.tokenIcon} 
+                className={styles.tokenIcon}
                 onError={(e) => {
                   // 图片加载失败时使用默认样式
-                  (e.target as HTMLImageElement).style.background = '#37415180';
+                  (e.target as HTMLImageElement).style.background = "#37415180";
                 }}
               />
               <img
@@ -108,7 +119,9 @@ const TokenMarquee: React.FC = () => {
               />
             </div>
             <span className={styles.tokenSymbol}>{token.token_symbol}</span>
-            <span className={styles.tokenPrice}>${formatPrice(token.mc_usd)}</span>
+            <span className={styles.tokenPrice}>
+              ${formatPrice(token.mc_usd)}
+            </span>
           </div>
         ))}
       </div>
@@ -121,7 +134,7 @@ const TokenMarquee: React.FC = () => {
         <span className={styles.fireEmoji}>🔥</span>
         <span className={styles.titleText}>Top Coins</span>
       </div>
-      
+
       <div className={styles.marqueeContainer} ref={marqueeRef}>
         {renderContent()}
       </div>
@@ -129,4 +142,4 @@ const TokenMarquee: React.FC = () => {
   );
 };
 
-export default TokenMarquee; 
+export default TokenMarquee;
